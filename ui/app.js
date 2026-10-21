@@ -90,6 +90,19 @@ async function loadSystem() {
     '<span class="chip"><b>MODEL</b>' + esc(info.llm) + "</span>" +
     '<span class="chip"><b>RETRIEVAL</b>' + esc(info.retrieval) + "</span>" +
     '<span class="chip"><b>TOOLS</b>' + esc(info.tools) + "</span>";
+  if (info.llm === "DemoLLM") { showDemoBanner(); }
+}
+
+function showDemoBanner() {
+  // Say clearly what this public demo is, so nobody mistakes it for a real model on real systems.
+  if (document.getElementById("demo-banner")) { return; }
+  var banner = document.createElement("div");
+  banner.id = "demo-banner";
+  banner.className = "demo-banner";
+  banner.innerHTML = "<b>Live demo.</b> The LLM is a scripted stand-in and the tools replay recorded incidents, so every run is " +
+    "repeatable and free. Run it with Claude, GPT, Gemini or a local model from the " +
+    '<a href="https://github.com/umangbagadi03/incidentpilot" target="_blank" rel="noopener">GitHub repo</a>.';
+  document.body.insertBefore(banner, document.body.children[1]);
 }
 
 async function loadScenarios() {

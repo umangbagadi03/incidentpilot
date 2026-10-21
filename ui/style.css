@@ -107,6 +107,18 @@ a { color: inherit; }
 }
 .chip b { font-weight: 500; color: var(--ink-3); margin-right: 6px; }
 
+/* ---------- demo banner ---------- */
+
+.demo-banner {
+  padding: 8px 20px;
+  font-size: 13px;
+  color: var(--ink-2);
+  background: var(--signal-soft);
+  border-bottom: 1px solid var(--rule);
+}
+.demo-banner b { color: var(--signal); }
+.demo-banner a { color: var(--ink); }
+
 /* ---------- layout ---------- */
 
 .layout { display: grid; grid-template-columns: 320px minmax(0, 1fr); min-height: calc(100vh - 56px); }
