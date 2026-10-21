@@ -1,0 +1,13 @@
+# Light install for the free live demo (512 MB of memory): everything except the two ML models.
+# Retrieval runs as BM25 only (USE_DENSE_RETRIEVAL=false). For the full hybrid RAG use requirements.txt.
+langgraph==1.2.12
+langgraph-checkpoint-sqlite==3.1.1
+pydantic>=2.5
+fastapi>=0.110
+uvicorn>=0.27
+prometheus-client>=0.19
+rank-bm25>=0.2.2
+anthropic>=0.40           # for visitors who bring a Claude key
+openai>=1.40              # for visitors who bring an OpenAI key
+google-genai>=1.0         # for visitors who bring a Gemini key
+python-dotenv>=1.0

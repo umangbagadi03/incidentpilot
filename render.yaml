@@ -1,0 +1,18 @@
+# One-click deploy on Render (free plan): https://render.com/deploy?repo=https://github.com/umangbagadi03/incidentpilot
+# The free plan has 512 MB of memory, so the live demo skips the two ML models and uses BM25 retrieval.
+# No API key is configured: the server uses the scripted model, and visitors can bring their own key in the UI.
+services:
+  - type: web
+    name: incidentpilot
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements-deploy.txt
+    startCommand: python main.py serve
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: HOST
+        value: 0.0.0.0
+      - key: USE_DENSE_RETRIEVAL
+        value: "false"

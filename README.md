@@ -186,6 +186,13 @@ pip install -r requirements.txt
 
 The first run downloads two small models (~200 MB: embeddings and reranker). Set `USE_DENSE_RETRIEVAL=false` to use BM25 only.
 
+**Deploy your own copy for free:**
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/umangbagadi03/incidentpilot)
+
+The free plan (512 MB) runs the light install in [`requirements-deploy.txt`](requirements-deploy.txt): the same agent with BM25 retrieval
+instead of the two ML models. The [`Dockerfile`](Dockerfile) runs the full version on any Docker host.
+
 **1. Web UI, no API key needed** (a scripted demo model plays the LLM):
 
 ```bash
