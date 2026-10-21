@@ -1,5 +1,6 @@
-# IncidentPilot demo image (used for the Hugging Face Space).
-# Runs the API + UI in demo mode: a scripted model plays the LLM, so no API key is needed.
+# IncidentPilot image (used for the Hugging Face Space).
+# With an API key set as a secret (for example GEMINI_API_KEY) the server uses that model, with the scripted
+# model as a fallback. With no key it uses the scripted model. Visitors can also bring their own key in the UI.
 FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 \
@@ -26,4 +27,4 @@ RUN useradd -m -u 1000 user && chown -R user:user /app
 USER user
 
 EXPOSE 7860
-CMD ["python", "main.py", "serve", "--demo"]
+CMD ["python", "main.py", "serve"]
