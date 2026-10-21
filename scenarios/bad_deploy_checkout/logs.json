@@ -1,0 +1,230 @@
+{
+  "service": "checkout",
+  "lines": [
+    {
+      "ts": "2026-10-10T05:01:26Z",
+      "level": "INFO",
+      "message": "GET /api/v1/items 200 898ms"
+    },
+    {
+      "ts": "2026-10-10T05:04:12Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 437ms"
+    },
+    {
+      "ts": "2026-10-10T05:04:45Z",
+      "level": "INFO",
+      "message": "cache hit ratio=0.98"
+    },
+    {
+      "ts": "2026-10-10T05:06:29Z",
+      "level": "INFO",
+      "message": "POST /api/v1/cart 201 64ms"
+    },
+    {
+      "ts": "2026-10-10T05:08:41Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 898ms"
+    },
+    {
+      "ts": "2026-10-10T05:09:26Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=3"
+    },
+    {
+      "ts": "2026-10-10T05:11:20Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 976ms"
+    },
+    {
+      "ts": "2026-10-10T05:12:07Z",
+      "level": "INFO",
+      "message": "cache hit ratio=0.98"
+    },
+    {
+      "ts": "2026-10-10T05:15:42Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 329ms"
+    },
+    {
+      "ts": "2026-10-10T05:18:00Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 129ms"
+    },
+    {
+      "ts": "2026-10-10T05:27:00Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 678ms"
+    },
+    {
+      "ts": "2026-10-10T05:30:32Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 253ms"
+    },
+    {
+      "ts": "2026-10-10T05:31:09Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 135ms"
+    },
+    {
+      "ts": "2026-10-10T05:33:58Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 295ms"
+    },
+    {
+      "ts": "2026-10-10T05:40:35Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 188ms"
+    },
+    {
+      "ts": "2026-10-10T05:44:00Z",
+      "level": "WARN",
+      "message": "Schema mismatch: field discount_code missing in cart payload (release 2.14.0)"
+    },
+    {
+      "ts": "2026-10-10T05:44:27Z",
+      "level": "ERROR",
+      "message": "Unhandled exception after release 2.14.0: KeyError 'discount_code' request_id=509"
+    },
+    {
+      "ts": "2026-10-10T05:44:44Z",
+      "level": "WARN",
+      "message": "Schema mismatch: field discount_code missing in cart payload (release 2.14.0)"
+    },
+    {
+      "ts": "2026-10-10T05:45:53Z",
+      "level": "ERROR",
+      "message": "Unhandled exception after release 2.14.0: KeyError 'discount_code' request_id=421"
+    },
+    {
+      "ts": "2026-10-10T05:45:55Z",
+      "level": "WARN",
+      "message": "Schema mismatch: field discount_code missing in cart payload (release 2.14.0)"
+    },
+    {
+      "ts": "2026-10-10T05:46:07Z",
+      "level": "ERROR",
+      "message": "Unhandled exception after release 2.14.0: KeyError 'discount_code' request_id=249"
+    },
+    {
+      "ts": "2026-10-10T05:46:43Z",
+      "level": "ERROR",
+      "message": "Unhandled exception after release 2.14.0: KeyError 'discount_code' request_id=291"
+    },
+    {
+      "ts": "2026-10-10T05:47:04Z",
+      "level": "WARN",
+      "message": "Schema mismatch: field discount_code missing in cart payload (release 2.14.0)"
+    },
+    {
+      "ts": "2026-10-10T05:47:37Z",
+      "level": "ERROR",
+      "message": "Unhandled exception after release 2.14.0: KeyError 'discount_code' request_id=334"
+    },
+    {
+      "ts": "2026-10-10T05:47:48Z",
+      "level": "WARN",
+      "message": "Schema mismatch: field discount_code missing in cart payload (release 2.14.0)"
+    },
+    {
+      "ts": "2026-10-10T05:47:57Z",
+      "level": "WARN",
+      "message": "Schema mismatch: field discount_code missing in cart payload (release 2.14.0)"
+    },
+    {
+      "ts": "2026-10-10T05:48:05Z",
+      "level": "ERROR",
+      "message": "HTTP 500 POST /api/v1/checkout request_id=292"
+    },
+    {
+      "ts": "2026-10-10T05:48:25Z",
+      "level": "WARN",
+      "message": "Schema mismatch: field discount_code missing in cart payload (release 2.14.0)"
+    },
+    {
+      "ts": "2026-10-10T05:48:37Z",
+      "level": "ERROR",
+      "message": "HTTP 500 POST /api/v1/checkout request_id=428"
+    },
+    {
+      "ts": "2026-10-10T05:49:08Z",
+      "level": "WARN",
+      "message": "Schema mismatch: field discount_code missing in cart payload (release 2.14.0)"
+    },
+    {
+      "ts": "2026-10-10T05:49:11Z",
+      "level": "ERROR",
+      "message": "HTTP 500 POST /api/v1/checkout request_id=461"
+    },
+    {
+      "ts": "2026-10-10T05:49:54Z",
+      "level": "ERROR",
+      "message": "Unhandled exception after release 2.14.0: KeyError 'discount_code' request_id=566"
+    },
+    {
+      "ts": "2026-10-10T05:50:17Z",
+      "level": "WARN",
+      "message": "Schema mismatch: field discount_code missing in cart payload (release 2.14.0)"
+    },
+    {
+      "ts": "2026-10-10T05:50:18Z",
+      "level": "ERROR",
+      "message": "HTTP 500 POST /api/v1/checkout request_id=817"
+    },
+    {
+      "ts": "2026-10-10T05:50:35Z",
+      "level": "ERROR",
+      "message": "HTTP 500 POST /api/v1/checkout request_id=597"
+    },
+    {
+      "ts": "2026-10-10T05:51:00Z",
+      "level": "ERROR",
+      "message": "HTTP 500 POST /api/v1/checkout request_id=261"
+    },
+    {
+      "ts": "2026-10-10T05:51:08Z",
+      "level": "ERROR",
+      "message": "HTTP 500 POST /api/v1/checkout request_id=571"
+    },
+    {
+      "ts": "2026-10-10T05:51:41Z",
+      "level": "WARN",
+      "message": "Schema mismatch: field discount_code missing in cart payload (release 2.14.0)"
+    },
+    {
+      "ts": "2026-10-10T05:52:25Z",
+      "level": "ERROR",
+      "message": "Unhandled exception after release 2.14.0: KeyError 'discount_code' request_id=93"
+    },
+    {
+      "ts": "2026-10-10T05:52:41Z",
+      "level": "ERROR",
+      "message": "HTTP 500 POST /api/v1/checkout request_id=608"
+    },
+    {
+      "ts": "2026-10-10T05:53:04Z",
+      "level": "ERROR",
+      "message": "Unhandled exception after release 2.14.0: KeyError 'discount_code' request_id=958"
+    },
+    {
+      "ts": "2026-10-10T05:53:27Z",
+      "level": "ERROR",
+      "message": "Unhandled exception after release 2.14.0: KeyError 'discount_code' request_id=832"
+    },
+    {
+      "ts": "2026-10-10T05:54:00Z",
+      "level": "ERROR",
+      "message": "Unhandled exception after release 2.14.0: KeyError 'discount_code' request_id=786"
+    },
+    {
+      "ts": "2026-10-10T05:54:34Z",
+      "level": "ERROR",
+      "message": "HTTP 500 POST /api/v1/checkout request_id=387"
+    },
+    {
+      "ts": "2026-10-10T05:54:50Z",
+      "level": "ERROR",
+      "message": "Unhandled exception after release 2.14.0: KeyError 'discount_code' request_id=243"
+    }
+  ]
+}

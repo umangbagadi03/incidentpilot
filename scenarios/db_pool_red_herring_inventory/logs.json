@@ -1,0 +1,255 @@
+{
+  "service": "inventory",
+  "lines": [
+    {
+      "ts": "2026-10-10T05:00:09Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=4"
+    },
+    {
+      "ts": "2026-10-10T05:03:41Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=4"
+    },
+    {
+      "ts": "2026-10-10T05:06:04Z",
+      "level": "INFO",
+      "message": "GET /api/v1/stock 200 41ms"
+    },
+    {
+      "ts": "2026-10-10T05:09:06Z",
+      "level": "INFO",
+      "message": "cache hit ratio=0.91"
+    },
+    {
+      "ts": "2026-10-10T05:12:37Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=4"
+    },
+    {
+      "ts": "2026-10-10T05:15:58Z",
+      "level": "INFO",
+      "message": "GET /api/v1/stock 200 41ms"
+    },
+    {
+      "ts": "2026-10-10T05:18:13Z",
+      "level": "INFO",
+      "message": "cache hit ratio=0.91"
+    },
+    {
+      "ts": "2026-10-10T05:21:05Z",
+      "level": "INFO",
+      "message": "GET /api/v1/stock 200 41ms"
+    },
+    {
+      "ts": "2026-10-10T05:24:26Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=4"
+    },
+    {
+      "ts": "2026-10-10T05:27:15Z",
+      "level": "INFO",
+      "message": "GET /api/v1/stock 200 41ms"
+    },
+    {
+      "ts": "2026-10-10T05:30:35Z",
+      "level": "INFO",
+      "message": "GET /api/v1/stock 200 41ms"
+    },
+    {
+      "ts": "2026-10-10T05:33:03Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=4"
+    },
+    {
+      "ts": "2026-10-10T05:36:07Z",
+      "level": "INFO",
+      "message": "cache hit ratio=0.91"
+    },
+    {
+      "ts": "2026-10-10T05:39:40Z",
+      "level": "INFO",
+      "message": "GET /api/v1/stock 200 41ms"
+    },
+    {
+      "ts": "2026-10-10T05:40:07Z",
+      "level": "ERROR",
+      "message": "PoolTimeout: QueuePool limit of size 20 overflow 0 reached, connection timed out after 30s request_id=653"
+    },
+    {
+      "ts": "2026-10-10T05:40:35Z",
+      "level": "ERROR",
+      "message": "HTTP 504 GET /api/v1/stock request_id=415"
+    },
+    {
+      "ts": "2026-10-10T05:41:36Z",
+      "level": "ERROR",
+      "message": "PoolTimeout: QueuePool limit of size 20 overflow 0 reached, connection timed out after 30s request_id=695"
+    },
+    {
+      "ts": "2026-10-10T05:42:35Z",
+      "level": "WARN",
+      "message": "supplier-api slow response took 28400ms (timeout 30000ms) request_id=199"
+    },
+    {
+      "ts": "2026-10-10T05:42:37Z",
+      "level": "INFO",
+      "message": "cache hit ratio=0.91"
+    },
+    {
+      "ts": "2026-10-10T05:43:39Z",
+      "level": "ERROR",
+      "message": "HTTP 504 GET /api/v1/stock request_id=161"
+    },
+    {
+      "ts": "2026-10-10T05:44:34Z",
+      "level": "WARN",
+      "message": "supplier-api slow response took 28400ms (timeout 30000ms) request_id=796"
+    },
+    {
+      "ts": "2026-10-10T05:45:19Z",
+      "level": "WARN",
+      "message": "supplier-api slow response took 28400ms (timeout 30000ms) request_id=470"
+    },
+    {
+      "ts": "2026-10-10T05:45:36Z",
+      "level": "INFO",
+      "message": "GET /api/v1/stock 200 41ms"
+    },
+    {
+      "ts": "2026-10-10T05:45:37Z",
+      "level": "WARN",
+      "message": "supplier-api slow response took 28400ms (timeout 30000ms) request_id=576"
+    },
+    {
+      "ts": "2026-10-10T05:46:49Z",
+      "level": "ERROR",
+      "message": "PoolTimeout: QueuePool limit of size 20 overflow 0 reached, connection timed out after 30s request_id=815"
+    },
+    {
+      "ts": "2026-10-10T05:47:19Z",
+      "level": "ERROR",
+      "message": "PoolTimeout: QueuePool limit of size 20 overflow 0 reached, connection timed out after 30s request_id=688"
+    },
+    {
+      "ts": "2026-10-10T05:48:04Z",
+      "level": "WARN",
+      "message": "supplier-api slow response took 28400ms (timeout 30000ms) request_id=723"
+    },
+    {
+      "ts": "2026-10-10T05:48:25Z",
+      "level": "INFO",
+      "message": "cache hit ratio=0.91"
+    },
+    {
+      "ts": "2026-10-10T05:48:28Z",
+      "level": "WARN",
+      "message": "supplier-api slow response took 28400ms (timeout 30000ms) request_id=846"
+    },
+    {
+      "ts": "2026-10-10T05:49:10Z",
+      "level": "ERROR",
+      "message": "HTTP 504 GET /api/v1/stock request_id=528"
+    },
+    {
+      "ts": "2026-10-10T05:50:04Z",
+      "level": "ERROR",
+      "message": "PoolTimeout: QueuePool limit of size 20 overflow 0 reached, connection timed out after 30s request_id=784"
+    },
+    {
+      "ts": "2026-10-10T05:50:26Z",
+      "level": "ERROR",
+      "message": "PoolTimeout: QueuePool limit of size 20 overflow 0 reached, connection timed out after 30s request_id=600"
+    },
+    {
+      "ts": "2026-10-10T05:51:14Z",
+      "level": "INFO",
+      "message": "GET /api/v1/stock 200 41ms"
+    },
+    {
+      "ts": "2026-10-10T05:51:22Z",
+      "level": "WARN",
+      "message": "supplier-api slow response took 28400ms (timeout 30000ms) request_id=811"
+    },
+    {
+      "ts": "2026-10-10T05:51:37Z",
+      "level": "ERROR",
+      "message": "HTTP 504 GET /api/v1/stock request_id=608"
+    },
+    {
+      "ts": "2026-10-10T05:52:05Z",
+      "level": "ERROR",
+      "message": "PoolTimeout: QueuePool limit of size 20 overflow 0 reached, connection timed out after 30s request_id=960"
+    },
+    {
+      "ts": "2026-10-10T05:52:44Z",
+      "level": "WARN",
+      "message": "supplier-api slow response took 28400ms (timeout 30000ms) request_id=585"
+    },
+    {
+      "ts": "2026-10-10T05:53:44Z",
+      "level": "ERROR",
+      "message": "PoolTimeout: QueuePool limit of size 20 overflow 0 reached, connection timed out after 30s request_id=848"
+    },
+    {
+      "ts": "2026-10-10T05:54:35Z",
+      "level": "INFO",
+      "message": "GET /api/v1/stock 200 41ms"
+    },
+    {
+      "ts": "2026-10-10T05:54:43Z",
+      "level": "ERROR",
+      "message": "HTTP 504 GET /api/v1/stock request_id=691"
+    },
+    {
+      "ts": "2026-10-10T05:54:45Z",
+      "level": "WARN",
+      "message": "supplier-api slow response took 28400ms (timeout 30000ms) request_id=391"
+    },
+    {
+      "ts": "2026-10-10T05:55:01Z",
+      "level": "ERROR",
+      "message": "HTTP 504 GET /api/v1/stock request_id=455"
+    },
+    {
+      "ts": "2026-10-10T05:55:10Z",
+      "level": "WARN",
+      "message": "supplier-api slow response took 28400ms (timeout 30000ms) request_id=463"
+    },
+    {
+      "ts": "2026-10-10T05:56:13Z",
+      "level": "WARN",
+      "message": "supplier-api slow response took 28400ms (timeout 30000ms) request_id=160"
+    },
+    {
+      "ts": "2026-10-10T05:57:15Z",
+      "level": "ERROR",
+      "message": "PoolTimeout: QueuePool limit of size 20 overflow 0 reached, connection timed out after 30s request_id=856"
+    },
+    {
+      "ts": "2026-10-10T05:57:18Z",
+      "level": "INFO",
+      "message": "GET /api/v1/stock 200 41ms"
+    },
+    {
+      "ts": "2026-10-10T05:57:58Z",
+      "level": "WARN",
+      "message": "supplier-api slow response took 28400ms (timeout 30000ms) request_id=500"
+    },
+    {
+      "ts": "2026-10-10T05:58:17Z",
+      "level": "WARN",
+      "message": "supplier-api slow response took 28400ms (timeout 30000ms) request_id=662"
+    },
+    {
+      "ts": "2026-10-10T05:58:28Z",
+      "level": "ERROR",
+      "message": "PoolTimeout: QueuePool limit of size 20 overflow 0 reached, connection timed out after 30s request_id=270"
+    },
+    {
+      "ts": "2026-10-10T05:59:35Z",
+      "level": "WARN",
+      "message": "supplier-api slow response took 28400ms (timeout 30000ms) request_id=984"
+    }
+  ]
+}

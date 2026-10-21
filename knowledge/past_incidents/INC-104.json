@@ -1,0 +1,9 @@
+{
+  "id": "INC-104",
+  "title": "Checkout slow during Black Friday campaign",
+  "service": "checkout",
+  "category": "traffic_spike",
+  "symptoms": "Request rate went to 3x baseline when the campaign started. CPU at 95% on all replicas, p95 latency over 2 seconds. No deploy.",
+  "root_cause": "Real traffic growth. Three replicas could not serve the campaign load.",
+  "resolution": "Restarting did not help. Scaled from 3 to 8 replicas and latency recovered within two minutes."
+}

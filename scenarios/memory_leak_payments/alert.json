@@ -1,0 +1,6 @@
+{
+  "service": "payments",
+  "title": "Payments containers restarting",
+  "description": "Container restarts and rising latency on payments. Memory alarm fired.",
+  "severity": "high"
+}

@@ -1,0 +1,6 @@
+{
+  "service": "orders",
+  "title": "Orders latency and timeouts during flash sale",
+  "description": "A flash sale started about 10 minutes ago. Order placement is slow and some requests time out.",
+  "severity": "high"
+}

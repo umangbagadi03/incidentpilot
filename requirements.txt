@@ -1,0 +1,29 @@
+# Install everything:  pip install -r requirements.txt
+# The first run downloads two small models (embeddings + reranker, about 200 MB in total) from Hugging Face.
+# No internet or no wish to download them? Set USE_DENSE_RETRIEVAL=false and the project runs with BM25 only.
+
+# Workflow (LangGraph) and durable checkpoints (SQLite)
+langgraph==1.2.12
+langgraph-checkpoint-sqlite==3.1.1
+
+# Typed data contracts, API, metrics
+pydantic>=2.5
+fastapi>=0.110
+uvicorn>=0.27
+prometheus-client>=0.19
+httpx>=0.27              # used by FastAPI's TestClient in tests/test_api.py
+pytest>=8.0              # runs the test suite
+
+# Hybrid retrieval: BM25 + embeddings in Qdrant + cross-encoder reranker
+rank-bm25>=0.2.2
+qdrant-client>=1.9
+sentence-transformers>=2.7
+
+# LLM providers (you need only the one you use)
+anthropic>=0.40
+openai>=1.40              # also used for Ollama (OpenAI-compatible API)
+google-genai>=1.0        # Gemini
+
+# Optional
+python-dotenv>=1.0       # reads the .env file
+# langfuse>=2.0          # pip install langfuse, then set the two LANGFUSE_* keys in .env for traces

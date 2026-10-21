@@ -1,0 +1,9 @@
+{
+  "id": "INC-103",
+  "title": "Orders service restarting with OOMKilled",
+  "service": "orders",
+  "category": "memory_leak",
+  "symptoms": "Memory grew for hours, then containers were OOMKilled. Latency rose before every restart. No recent deploy.",
+  "root_cause": "A cache in the code never removed old entries, so memory grew until the limit.",
+  "resolution": "Restarted the service as a temporary fix. The team fixed the cache in the next sprint."
+}

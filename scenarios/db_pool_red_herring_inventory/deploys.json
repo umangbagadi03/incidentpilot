@@ -1,0 +1,15 @@
+{
+  "service": "inventory",
+  "current_version": "3.8.2",
+  "previous_version": "3.8.1",
+  "deploys": [
+    {
+      "version": "3.8.2",
+      "deployed_at": "2026-10-10T05:12:00Z",
+      "minutes_ago": 48,
+      "author": "docs-bot",
+      "notes": "Update README and OpenAPI descriptions (no code changes)",
+      "is_rollback": false
+    }
+  ]
+}

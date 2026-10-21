@@ -1,0 +1,21 @@
+{
+  "service": "inventory",
+  "version": "3.8.2",
+  "replicas": 4,
+  "health": "degraded",
+  "problems": [
+    "latency_p95",
+    "error_rate"
+  ],
+  "current": {
+    "error_rate": 6.2,
+    "latency_p95": 2350.0,
+    "cpu_percent": 22.4,
+    "memory_mb": 830.5,
+    "request_rate": 139.8
+  },
+  "slo": {
+    "error_rate_max": 2.0,
+    "latency_p95_max": 800
+  }
+}

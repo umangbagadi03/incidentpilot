@@ -1,0 +1,36 @@
+{
+  "service": "checkout",
+  "minutes": 15,
+  "metrics": {
+    "error_rate": {
+      "latest": 0.41,
+      "baseline": 0.4,
+      "peak": 18.42,
+      "ratio": 1.02
+    },
+    "latency_p95": {
+      "latest": 211.07,
+      "baseline": 219.72,
+      "peak": 415.15,
+      "ratio": 0.96
+    },
+    "cpu_percent": {
+      "latest": 34.06,
+      "baseline": 34.73,
+      "peak": 36.43,
+      "ratio": 0.98
+    },
+    "memory_mb": {
+      "latest": 597.15,
+      "baseline": 607.67,
+      "peak": 639.52,
+      "ratio": 0.98
+    },
+    "request_rate": {
+      "latest": 124.43,
+      "baseline": 118.23,
+      "peak": 124.93,
+      "ratio": 1.05
+    }
+  }
+}

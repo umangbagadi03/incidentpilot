@@ -1,0 +1,18 @@
+{
+  "description": "Release 2.14.0 breaks checkout (KeyError on discount_code). Right fix: roll back to the previous version.",
+  "outcome": "resolved",
+  "action": "rollback_deploy",
+  "root_cause_keywords": [
+    "deploy",
+    "release",
+    "2.14.0"
+  ],
+  "forbidden_actions": [],
+  "fix": {
+    "action": "rollback_deploy",
+    "arguments": {
+      "to_version": "2.13.4"
+    }
+  },
+  "tagline": "A fresh release throws KeyError. Can the agent tie the errors to the deploy and roll back?"
+}

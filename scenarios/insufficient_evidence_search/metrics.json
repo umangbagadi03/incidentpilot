@@ -1,0 +1,36 @@
+{
+  "service": "search",
+  "minutes": 15,
+  "metrics": {
+    "error_rate": {
+      "latest": 0.4,
+      "baseline": 0.35,
+      "peak": 0.4,
+      "ratio": 1.14
+    },
+    "latency_p95": {
+      "latest": 341.2,
+      "baseline": 300.0,
+      "peak": 341.2,
+      "ratio": 1.14
+    },
+    "cpu_percent": {
+      "latest": 47.5,
+      "baseline": 45.0,
+      "peak": 48.02,
+      "ratio": 1.06
+    },
+    "memory_mb": {
+      "latest": 912.0,
+      "baseline": 900.0,
+      "peak": 958.84,
+      "ratio": 1.01
+    },
+    "request_rate": {
+      "latest": 210.3,
+      "baseline": 205.0,
+      "peak": 213.25,
+      "ratio": 1.03
+    }
+  }
+}

@@ -1,0 +1,190 @@
+{
+  "service": "orders",
+  "lines": [
+    {
+      "ts": "2026-10-10T05:00:45Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=3"
+    },
+    {
+      "ts": "2026-10-10T05:03:22Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=3"
+    },
+    {
+      "ts": "2026-10-10T05:06:14Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=3"
+    },
+    {
+      "ts": "2026-10-10T05:09:05Z",
+      "level": "INFO",
+      "message": "POST /api/v1/orders 201 88ms"
+    },
+    {
+      "ts": "2026-10-10T05:12:09Z",
+      "level": "INFO",
+      "message": "POST /api/v1/orders 201 88ms"
+    },
+    {
+      "ts": "2026-10-10T05:15:42Z",
+      "level": "INFO",
+      "message": "POST /api/v1/orders 201 88ms"
+    },
+    {
+      "ts": "2026-10-10T05:18:00Z",
+      "level": "INFO",
+      "message": "POST /api/v1/orders 201 88ms"
+    },
+    {
+      "ts": "2026-10-10T05:21:53Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=3"
+    },
+    {
+      "ts": "2026-10-10T05:24:16Z",
+      "level": "INFO",
+      "message": "POST /api/v1/orders 201 88ms"
+    },
+    {
+      "ts": "2026-10-10T05:27:00Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=3"
+    },
+    {
+      "ts": "2026-10-10T05:30:26Z",
+      "level": "INFO",
+      "message": "POST /api/v1/orders 201 88ms"
+    },
+    {
+      "ts": "2026-10-10T05:33:39Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=3"
+    },
+    {
+      "ts": "2026-10-10T05:36:08Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=3"
+    },
+    {
+      "ts": "2026-10-10T05:39:29Z",
+      "level": "INFO",
+      "message": "POST /api/v1/orders 201 88ms"
+    },
+    {
+      "ts": "2026-10-10T05:42:25Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=3"
+    },
+    {
+      "ts": "2026-10-10T05:45:25Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=3"
+    },
+    {
+      "ts": "2026-10-10T05:48:30Z",
+      "level": "INFO",
+      "message": "POST /api/v1/orders 201 88ms"
+    },
+    {
+      "ts": "2026-10-10T05:48:38Z",
+      "level": "WARN",
+      "message": "worker pool saturated queue_depth=448 max_workers=64"
+    },
+    {
+      "ts": "2026-10-10T05:49:36Z",
+      "level": "WARN",
+      "message": "worker pool saturated queue_depth=100 max_workers=64"
+    },
+    {
+      "ts": "2026-10-10T05:50:23Z",
+      "level": "INFO",
+      "message": "campaign SUMMER50 traffic ramp, requests per second rising"
+    },
+    {
+      "ts": "2026-10-10T05:51:03Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=3"
+    },
+    {
+      "ts": "2026-10-10T05:51:13Z",
+      "level": "WARN",
+      "message": "worker pool saturated queue_depth=995 max_workers=64"
+    },
+    {
+      "ts": "2026-10-10T05:52:16Z",
+      "level": "WARN",
+      "message": "worker pool saturated queue_depth=749 max_workers=64"
+    },
+    {
+      "ts": "2026-10-10T05:52:23Z",
+      "level": "ERROR",
+      "message": "upstream timeout after 5000ms POST /api/v1/orders request_id=716"
+    },
+    {
+      "ts": "2026-10-10T05:53:30Z",
+      "level": "ERROR",
+      "message": "upstream timeout after 5000ms POST /api/v1/orders request_id=577"
+    },
+    {
+      "ts": "2026-10-10T05:53:54Z",
+      "level": "WARN",
+      "message": "worker pool saturated queue_depth=218 max_workers=64"
+    },
+    {
+      "ts": "2026-10-10T05:54:04Z",
+      "level": "INFO",
+      "message": "POST /api/v1/orders 201 88ms"
+    },
+    {
+      "ts": "2026-10-10T05:54:09Z",
+      "level": "ERROR",
+      "message": "upstream timeout after 5000ms POST /api/v1/orders request_id=187"
+    },
+    {
+      "ts": "2026-10-10T05:54:21Z",
+      "level": "WARN",
+      "message": "worker pool saturated queue_depth=867 max_workers=64"
+    },
+    {
+      "ts": "2026-10-10T05:55:01Z",
+      "level": "WARN",
+      "message": "worker pool saturated queue_depth=628 max_workers=64"
+    },
+    {
+      "ts": "2026-10-10T05:55:44Z",
+      "level": "ERROR",
+      "message": "upstream timeout after 5000ms POST /api/v1/orders request_id=948"
+    },
+    {
+      "ts": "2026-10-10T05:56:09Z",
+      "level": "INFO",
+      "message": "campaign SUMMER50 traffic ramp, requests per second rising"
+    },
+    {
+      "ts": "2026-10-10T05:57:28Z",
+      "level": "INFO",
+      "message": "POST /api/v1/orders 201 88ms"
+    },
+    {
+      "ts": "2026-10-10T05:57:41Z",
+      "level": "INFO",
+      "message": "campaign SUMMER50 traffic ramp, requests per second rising"
+    },
+    {
+      "ts": "2026-10-10T05:58:16Z",
+      "level": "INFO",
+      "message": "campaign SUMMER50 traffic ramp, requests per second rising"
+    },
+    {
+      "ts": "2026-10-10T05:59:34Z",
+      "level": "WARN",
+      "message": "worker pool saturated queue_depth=645 max_workers=64"
+    },
+    {
+      "ts": "2026-10-10T05:59:49Z",
+      "level": "WARN",
+      "message": "worker pool saturated queue_depth=464 max_workers=64"
+    }
+  ]
+}

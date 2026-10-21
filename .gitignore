@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Secrets
+.env
+
+# Runtime data (created by the app)
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/learned/
+reports/*.md
+reports/*.json
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+.claude/
+
+# Archives
+*.zip

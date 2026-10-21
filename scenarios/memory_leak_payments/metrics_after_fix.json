@@ -1,0 +1,36 @@
+{
+  "service": "payments",
+  "minutes": 15,
+  "metrics": {
+    "error_rate": {
+      "latest": 0.3,
+      "baseline": 0.3,
+      "peak": 3.31,
+      "ratio": 1.0
+    },
+    "latency_p95": {
+      "latest": 300.77,
+      "baseline": 308.37,
+      "peak": 455.28,
+      "ratio": 0.98
+    },
+    "cpu_percent": {
+      "latest": 40.26,
+      "baseline": 39.78,
+      "peak": 41.98,
+      "ratio": 1.01
+    },
+    "memory_mb": {
+      "latest": 730.29,
+      "baseline": 719.87,
+      "peak": 1940.43,
+      "ratio": 1.01
+    },
+    "request_rate": {
+      "latest": 91.96,
+      "baseline": 89.79,
+      "peak": 93.81,
+      "ratio": 1.02
+    }
+  }
+}

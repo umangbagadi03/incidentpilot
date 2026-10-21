@@ -1,0 +1,21 @@
+{
+  "service": "payments",
+  "version": "5.2.1",
+  "replicas": 3,
+  "health": "degraded",
+  "problems": [
+    "error_rate",
+    "memory_mb"
+  ],
+  "current": {
+    "error_rate": 3.3,
+    "latency_p95": 421.07,
+    "cpu_percent": 40.26,
+    "memory_mb": 2050.29,
+    "request_rate": 91.96
+  },
+  "slo": {
+    "error_rate_max": 2.0,
+    "latency_p95_max": 500
+  }
+}

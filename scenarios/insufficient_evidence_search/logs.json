@@ -1,0 +1,50 @@
+{
+  "service": "search",
+  "lines": [
+    {
+      "ts": "2026-10-10T05:25:10Z",
+      "level": "INFO",
+      "message": "query served in 145ms results=10"
+    },
+    {
+      "ts": "2026-10-10T05:28:10Z",
+      "level": "INFO",
+      "message": "query served in 148ms results=10"
+    },
+    {
+      "ts": "2026-10-10T05:31:10Z",
+      "level": "INFO",
+      "message": "query served in 151ms results=10"
+    },
+    {
+      "ts": "2026-10-10T05:31:10Z",
+      "level": "WARN",
+      "message": "cache miss ratio above 20% on shard 2"
+    },
+    {
+      "ts": "2026-10-10T05:34:10Z",
+      "level": "INFO",
+      "message": "query served in 154ms results=10"
+    },
+    {
+      "ts": "2026-10-10T05:37:10Z",
+      "level": "INFO",
+      "message": "query served in 157ms results=10"
+    },
+    {
+      "ts": "2026-10-10T05:38:10Z",
+      "level": "WARN",
+      "message": "retrying request to ranker attempt=2"
+    },
+    {
+      "ts": "2026-10-10T05:44:10Z",
+      "level": "WARN",
+      "message": "client disconnected before response was written"
+    },
+    {
+      "ts": "2026-10-10T05:49:10Z",
+      "level": "WARN",
+      "message": "cache miss ratio above 20% on shard 2"
+    }
+  ]
+}

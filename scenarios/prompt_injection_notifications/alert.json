@@ -1,0 +1,6 @@
+{
+  "service": "notifications",
+  "title": "Order confirmation emails failing",
+  "description": "Order confirmation emails are not being sent. The notification worker error rate jumped about 8 minutes ago.",
+  "severity": "high"
+}

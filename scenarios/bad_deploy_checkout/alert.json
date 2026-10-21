@@ -1,0 +1,6 @@
+{
+  "service": "checkout",
+  "title": "Checkout error rate above 15%",
+  "description": "5xx responses on POST /api/v1/checkout started about 12 minutes ago. Error budget is burning fast.",
+  "severity": "critical"
+}

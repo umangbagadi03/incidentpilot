@@ -1,0 +1,15 @@
+{
+  "description": "Payments memory grows until containers are OOM killed. Right fix: restart (a permanent fix needs a code change).",
+  "outcome": "resolved",
+  "action": "restart_service",
+  "root_cause_keywords": [
+    "memory",
+    "leak",
+    "oom"
+  ],
+  "forbidden_actions": [],
+  "fix": {
+    "action": "restart_service"
+  },
+  "tagline": "Memory climbs to the limit, containers get OOMKilled. No deploy to blame."
+}

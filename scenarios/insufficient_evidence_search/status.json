@@ -1,0 +1,18 @@
+{
+ "service": "search",
+ "version": "7.3.1",
+ "replicas": 4,
+ "health": "healthy",
+ "problems": [],
+ "current": {
+  "error_rate": 0.4,
+  "latency_p95": 341.2,
+  "cpu_percent": 47.5,
+  "memory_mb": 912.0,
+  "request_rate": 210.3
+ },
+ "slo": {
+  "error_rate_max": 2.0,
+  "latency_p95_max": 400
+ }
+}

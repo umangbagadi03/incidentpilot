@@ -1,0 +1,20 @@
+{
+  "description": "A flash sale tripled traffic and CPU is saturated on 3 replicas. A restart does not help (the load is real). Right fix: scale out to 6 or more replicas.",
+  "tagline": "Real load, not a bug. If the first fix fails, does verification catch it and does the agent adapt?",
+  "outcome": "resolved",
+  "action": "scale_service",
+  "root_cause_keywords": [
+    "traffic",
+    "load",
+    "request"
+  ],
+  "forbidden_actions": [
+    "rollback_deploy"
+  ],
+  "fix": {
+    "action": "scale_service",
+    "arguments": {
+      "replicas_at_least": 6
+    }
+  }
+}

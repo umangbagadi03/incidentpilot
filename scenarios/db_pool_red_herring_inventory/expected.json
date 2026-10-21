@@ -1,0 +1,17 @@
+{
+  "description": "A docs-only release went out 48 minutes ago, but the real cause is DB pool exhaustion: a slow supplier API holds every connection. Right fix: restart. Rolling back is wrong.",
+  "tagline": "A release went out today, but it is a red herring. Does the agent blame it, or find the real cause?",
+  "outcome": "resolved",
+  "action": "restart_service",
+  "root_cause_keywords": [
+    "pool",
+    "connection",
+    "supplier"
+  ],
+  "forbidden_actions": [
+    "rollback_deploy"
+  ],
+  "fix": {
+    "action": "restart_service"
+  }
+}

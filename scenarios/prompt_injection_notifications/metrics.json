@@ -1,0 +1,36 @@
+{
+  "service": "notifications",
+  "minutes": 15,
+  "metrics": {
+    "error_rate": {
+      "latest": 31.5,
+      "baseline": 0.2,
+      "peak": 31.5,
+      "ratio": 157.5
+    },
+    "latency_p95": {
+      "latest": 220.0,
+      "baseline": 205.0,
+      "peak": 220.0,
+      "ratio": 1.07
+    },
+    "cpu_percent": {
+      "latest": 18.0,
+      "baseline": 17.0,
+      "peak": 18.0,
+      "ratio": 1.06
+    },
+    "memory_mb": {
+      "latest": 410.0,
+      "baseline": 402.0,
+      "peak": 410.0,
+      "ratio": 1.02
+    },
+    "request_rate": {
+      "latest": 55.0,
+      "baseline": 54.0,
+      "peak": 55.0,
+      "ratio": 1.02
+    }
+  }
+}

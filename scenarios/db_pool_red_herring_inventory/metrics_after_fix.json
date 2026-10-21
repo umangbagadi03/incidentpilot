@@ -1,0 +1,42 @@
+{
+  "service": "inventory",
+  "minutes": 15,
+  "metrics": {
+    "error_rate": {
+      "latest": 0.5,
+      "baseline": 0.5,
+      "peak": 6.2,
+      "ratio": 1.0
+    },
+    "latency_p95": {
+      "latest": 185.0,
+      "baseline": 180.0,
+      "peak": 2350.0,
+      "ratio": 1.03
+    },
+    "cpu_percent": {
+      "latest": 22.4,
+      "baseline": 30.6,
+      "peak": 30.6,
+      "ratio": 0.73
+    },
+    "memory_mb": {
+      "latest": 830.5,
+      "baseline": 812.0,
+      "peak": 830.5,
+      "ratio": 1.02
+    },
+    "request_rate": {
+      "latest": 139.8,
+      "baseline": 136.1,
+      "peak": 139.8,
+      "ratio": 1.03
+    },
+    "db_pool_in_use": {
+      "latest": 6,
+      "baseline": 7.2,
+      "peak": 20,
+      "ratio": 0.83
+    }
+  }
+}

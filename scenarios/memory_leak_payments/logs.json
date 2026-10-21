@@ -1,0 +1,230 @@
+{
+  "service": "payments",
+  "lines": [
+    {
+      "ts": "2026-10-10T05:01:01Z",
+      "level": "INFO",
+      "message": "GET /api/v1/items 200 659ms"
+    },
+    {
+      "ts": "2026-10-10T05:02:07Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 160ms"
+    },
+    {
+      "ts": "2026-10-10T05:03:03Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=3"
+    },
+    {
+      "ts": "2026-10-10T05:05:39Z",
+      "level": "INFO",
+      "message": "GET /api/v1/items 200 436ms"
+    },
+    {
+      "ts": "2026-10-10T05:07:24Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=3"
+    },
+    {
+      "ts": "2026-10-10T05:08:12Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 10ms"
+    },
+    {
+      "ts": "2026-10-10T05:09:50Z",
+      "level": "INFO",
+      "message": "health check ok replicas_ready=3"
+    },
+    {
+      "ts": "2026-10-10T05:15:12Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 870ms"
+    },
+    {
+      "ts": "2026-10-10T05:17:51Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 115ms"
+    },
+    {
+      "ts": "2026-10-10T05:23:56Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 711ms"
+    },
+    {
+      "ts": "2026-10-10T05:27:32Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 551ms"
+    },
+    {
+      "ts": "2026-10-10T05:35:55Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 83ms"
+    },
+    {
+      "ts": "2026-10-10T05:42:10Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 189ms"
+    },
+    {
+      "ts": "2026-10-10T05:44:13Z",
+      "level": "ERROR",
+      "message": "java.lang.OutOfMemoryError: Java heap space in OrderCache.put"
+    },
+    {
+      "ts": "2026-10-10T05:45:01Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 973ms"
+    },
+    {
+      "ts": "2026-10-10T05:45:05Z",
+      "level": "ERROR",
+      "message": "OOMKilled: container payments-953 exceeded memory limit 2048Mi"
+    },
+    {
+      "ts": "2026-10-10T05:45:14Z",
+      "level": "ERROR",
+      "message": "java.lang.OutOfMemoryError: Java heap space in OrderCache.put"
+    },
+    {
+      "ts": "2026-10-10T05:46:16Z",
+      "level": "ERROR",
+      "message": "java.lang.OutOfMemoryError: Java heap space in OrderCache.put"
+    },
+    {
+      "ts": "2026-10-10T05:46:32Z",
+      "level": "WARN",
+      "message": "GC overhead high: heap=699MB usage=93%"
+    },
+    {
+      "ts": "2026-10-10T05:46:58Z",
+      "level": "ERROR",
+      "message": "java.lang.OutOfMemoryError: Java heap space in OrderCache.put"
+    },
+    {
+      "ts": "2026-10-10T05:47:23Z",
+      "level": "WARN",
+      "message": "Container restarted restart_count=3"
+    },
+    {
+      "ts": "2026-10-10T05:47:30Z",
+      "level": "ERROR",
+      "message": "java.lang.OutOfMemoryError: Java heap space in OrderCache.put"
+    },
+    {
+      "ts": "2026-10-10T05:47:52Z",
+      "level": "ERROR",
+      "message": "java.lang.OutOfMemoryError: Java heap space in OrderCache.put"
+    },
+    {
+      "ts": "2026-10-10T05:48:06Z",
+      "level": "WARN",
+      "message": "Container restarted restart_count=6"
+    },
+    {
+      "ts": "2026-10-10T05:48:14Z",
+      "level": "ERROR",
+      "message": "java.lang.OutOfMemoryError: Java heap space in OrderCache.put"
+    },
+    {
+      "ts": "2026-10-10T05:48:19Z",
+      "level": "ERROR",
+      "message": "OOMKilled: container payments-399 exceeded memory limit 2048Mi"
+    },
+    {
+      "ts": "2026-10-10T05:48:47Z",
+      "level": "WARN",
+      "message": "GC overhead high: heap=428MB usage=93%"
+    },
+    {
+      "ts": "2026-10-10T05:49:45Z",
+      "level": "WARN",
+      "message": "Container restarted restart_count=5"
+    },
+    {
+      "ts": "2026-10-10T05:49:47Z",
+      "level": "ERROR",
+      "message": "OOMKilled: container payments-708 exceeded memory limit 2048Mi"
+    },
+    {
+      "ts": "2026-10-10T05:50:08Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 709ms"
+    },
+    {
+      "ts": "2026-10-10T05:50:39Z",
+      "level": "ERROR",
+      "message": "java.lang.OutOfMemoryError: Java heap space in OrderCache.put"
+    },
+    {
+      "ts": "2026-10-10T05:50:53Z",
+      "level": "ERROR",
+      "message": "java.lang.OutOfMemoryError: Java heap space in OrderCache.put"
+    },
+    {
+      "ts": "2026-10-10T05:51:15Z",
+      "level": "ERROR",
+      "message": "java.lang.OutOfMemoryError: Java heap space in OrderCache.put"
+    },
+    {
+      "ts": "2026-10-10T05:51:22Z",
+      "level": "WARN",
+      "message": "Container restarted restart_count=8"
+    },
+    {
+      "ts": "2026-10-10T05:51:42Z",
+      "level": "ERROR",
+      "message": "java.lang.OutOfMemoryError: Java heap space in OrderCache.put"
+    },
+    {
+      "ts": "2026-10-10T05:52:08Z",
+      "level": "WARN",
+      "message": "Container restarted restart_count=7"
+    },
+    {
+      "ts": "2026-10-10T05:52:43Z",
+      "level": "ERROR",
+      "message": "OOMKilled: container payments-385 exceeded memory limit 2048Mi"
+    },
+    {
+      "ts": "2026-10-10T05:52:54Z",
+      "level": "WARN",
+      "message": "slow request path=/api/v1/items took 484ms"
+    },
+    {
+      "ts": "2026-10-10T05:53:16Z",
+      "level": "ERROR",
+      "message": "OOMKilled: container payments-413 exceeded memory limit 2048Mi"
+    },
+    {
+      "ts": "2026-10-10T05:53:25Z",
+      "level": "ERROR",
+      "message": "OOMKilled: container payments-840 exceeded memory limit 2048Mi"
+    },
+    {
+      "ts": "2026-10-10T05:53:43Z",
+      "level": "WARN",
+      "message": "GC overhead high: heap=723MB usage=93%"
+    },
+    {
+      "ts": "2026-10-10T05:53:53Z",
+      "level": "ERROR",
+      "message": "OOMKilled: container payments-156 exceeded memory limit 2048Mi"
+    },
+    {
+      "ts": "2026-10-10T05:54:46Z",
+      "level": "ERROR",
+      "message": "java.lang.OutOfMemoryError: Java heap space in OrderCache.put"
+    },
+    {
+      "ts": "2026-10-10T05:54:48Z",
+      "level": "WARN",
+      "message": "Container restarted restart_count=7"
+    },
+    {
+      "ts": "2026-10-10T05:55:11Z",
+      "level": "ERROR",
+      "message": "OOMKilled: container payments-398 exceeded memory limit 2048Mi"
+    }
+  ]
+}

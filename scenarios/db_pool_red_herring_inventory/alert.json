@@ -1,0 +1,6 @@
+{
+  "service": "inventory",
+  "title": "Inventory p95 latency above 2 seconds",
+  "description": "Stock lookups on GET /api/v1/stock are timing out. The storefront reports 504 errors. A release went out earlier today.",
+  "severity": "high"
+}

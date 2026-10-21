@@ -1,0 +1,36 @@
+{
+  "service": "orders",
+  "minutes": 15,
+  "metrics": {
+    "error_rate": {
+      "latest": 0.4,
+      "baseline": 0.3,
+      "peak": 4.1,
+      "ratio": 1.33
+    },
+    "latency_p95": {
+      "latest": 260.0,
+      "baseline": 240.0,
+      "peak": 1650.0,
+      "ratio": 1.08
+    },
+    "cpu_percent": {
+      "latest": 48.0,
+      "baseline": 41.0,
+      "peak": 96.2,
+      "ratio": 1.17
+    },
+    "memory_mb": {
+      "latest": 1104.0,
+      "baseline": 1050.0,
+      "peak": 1104.0,
+      "ratio": 1.05
+    },
+    "request_rate": {
+      "latest": 410.5,
+      "baseline": 120.0,
+      "peak": 410.5,
+      "ratio": 3.42
+    }
+  }
+}

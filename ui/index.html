@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IncidentPilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>Incident<em>Pilot</em></span></div>
+  <div class="system" id="system"></div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <section>
+      <h2 class="label">Run a drill</h2>
+      <div id="scenarios" class="scenario-list"></div>
+    </section>
+    <section>
+      <h2 class="label">Incident log</h2>
+      <div id="incidents" class="incident-list"><p class="muted small">No incidents yet.</p></div>
+    </section>
+  </aside>
+
+  <main id="detail" class="detail"></main>
+</div>
+
+<script src="/ui/app.js"></script>
+</body>
+</html>

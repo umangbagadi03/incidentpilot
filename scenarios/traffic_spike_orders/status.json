@@ -1,0 +1,22 @@
+{
+  "service": "orders",
+  "version": "4.1.0",
+  "replicas": 3,
+  "health": "degraded",
+  "problems": [
+    "latency_p95",
+    "error_rate",
+    "cpu_percent"
+  ],
+  "current": {
+    "error_rate": 4.1,
+    "latency_p95": 1650.0,
+    "cpu_percent": 96.2,
+    "memory_mb": 1104.0,
+    "request_rate": 410.5
+  },
+  "slo": {
+    "error_rate_max": 2.0,
+    "latency_p95_max": 600
+  }
+}

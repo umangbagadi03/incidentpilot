@@ -1,0 +1,6 @@
+{
+ "service": "search",
+ "title": "Search latency intermittently above target",
+ "description": "A few users report occasional slow search results. No clear pattern, no error spike reported.",
+ "severity": "medium"
+}

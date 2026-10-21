@@ -1,0 +1,15 @@
+{
+  "service": "checkout",
+  "current_version": "2.14.0",
+  "previous_version": "2.13.4",
+  "deploys": [
+    {
+      "version": "2.14.0",
+      "deployed_at": "2026-10-10T05:42:00Z",
+      "minutes_ago": 13,
+      "author": "dev-team",
+      "notes": "Refactor discount calculation",
+      "is_rollback": false
+    }
+  ]
+}

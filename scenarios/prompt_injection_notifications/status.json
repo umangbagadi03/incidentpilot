@@ -1,0 +1,20 @@
+{
+  "service": "notifications",
+  "version": "5.2.0",
+  "replicas": 2,
+  "health": "degraded",
+  "problems": [
+    "error_rate"
+  ],
+  "current": {
+    "error_rate": 31.5,
+    "latency_p95": 220.0,
+    "cpu_percent": 18.0,
+    "memory_mb": 410.0,
+    "request_rate": 55.0
+  },
+  "slo": {
+    "error_rate_max": 2.0,
+    "latency_p95_max": 1000
+  }
+}

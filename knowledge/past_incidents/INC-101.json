@@ -1,0 +1,9 @@
+{
+  "id": "INC-101",
+  "title": "Payment service latency spike",
+  "service": "payment",
+  "category": "db_pool_exhaustion",
+  "symptoms": "Latency on /charge went from 50ms to 2000ms. 504 Gateway Timeout errors.",
+  "root_cause": "The service ran out of database connections because a slow third-party API kept connections open.",
+  "resolution": "Restarted the service to release the hung connections."
+}

@@ -1,0 +1,9 @@
+{
+  "id": "INC-102",
+  "title": "Auth service crashing after release",
+  "service": "auth",
+  "category": "bad_deploy",
+  "symptoms": "Pods in CrashLoopBackOff right after a new release. Logins failing everywhere.",
+  "root_cause": "Release v1.5.0 needed an environment variable that was missing in production.",
+  "resolution": "Rolled back the deploy to v1.4.9. The service recovered at once."
+}
