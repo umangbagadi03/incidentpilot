@@ -8,12 +8,17 @@ It investigates with read-only tools, keeps competing hypotheses, writes a root 
 fact-checked by code, and changes nothing until a policy check and a human approve. Then it verifies recovery,
 and re-opens the investigation if the fix did not work.
 
+[![Live demo](https://img.shields.io/badge/live%20demo-online-d9480f)](https://incidentpilot.onrender.com)
 [![Tests](https://github.com/umangbagadi03/incidentpilot/actions/workflows/tests.yml/badge.svg)](https://github.com/umangbagadi03/incidentpilot/actions/workflows/tests.yml)
 ![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)
 ![LangGraph](https://img.shields.io/badge/LangGraph-agent%20workflow-1C3C3C)
 ![FastAPI](https://img.shields.io/badge/FastAPI-API%20%2B%20UI-009688?logo=fastapi&logoColor=white)
 ![Qdrant](https://img.shields.io/badge/Qdrant-hybrid%20RAG-DC244C)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+### [▶ Try the live demo](https://incidentpilot.onrender.com)
+
+<sub>Free hosting: if the demo has been idle, the first load takes about a minute while the server wakes up.</sub>
 
 [Highlights](#highlights) · [Architecture](#architecture) · [Quick start](#quick-start) · [Scenarios](#evaluation-scenarios) · [Evaluation](#evaluation) · [Design decisions](#design-decisions) · [Limitations](#limitations-and-roadmap)
 
