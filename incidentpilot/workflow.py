@@ -37,6 +37,7 @@ class IncidentState(TypedDict, total=False):
     status: str                 # running, waiting_approval, resolved, escalated
     evidence: list              # list of Evidence dicts: E1, E2, ...
     hypotheses: list            # the hypothesis board: H1, H2, ... (supported / refuted / open)
+    llm: str                    # which model works on this incident (a name only, never a key)
     steps: int                  # tool calls in the current investigation
     done_investigating: bool
     rca: dict
@@ -192,7 +193,8 @@ class IncidentWorkflow:
         timeline = state["timeline"]
 
         hypotheses = state.get("hypotheses", [])
-        decision = self.agent.decide_next_step(state["alert"], state["evidence"], step, max_steps, hypotheses)
+        incident_id = state["incident_id"]
+        decision = self.agent.decide_next_step(state["alert"], state["evidence"], step, max_steps, hypotheses, incident_id)
 
         # The board the LLM sent back is checked by code: no "supported" without real evidence.
         if len(decision.hypotheses) > 0:
@@ -203,7 +205,8 @@ class IncidentWorkflow:
 
         if decision.action == "finish":
             timeline = self.add_event(timeline, "investigate", "agent stops investigating: " + decision.reason)
-            return {"done_investigating": True, "hypotheses": hypotheses, "timeline": timeline}
+            return {"done_investigating": True, "hypotheses": hypotheses, "timeline": timeline,
+                    "llm": self.agent.label_for(incident_id)}
 
         message = "step " + str(step) + ": " + decision.tool
         if decision.hypothesis != "":
@@ -225,6 +228,7 @@ class IncidentWorkflow:
             "hypotheses": hypotheses,
             "done_investigating": done,
             "timeline": timeline,
+            "llm": self.agent.label_for(incident_id),
         }
 
     def collect_evidence(self, state, step, tool_name, arguments):
@@ -266,7 +270,8 @@ class IncidentWorkflow:
         return evidence.model_dump()
 
     def analyze(self, state):
-        rca = self.agent.write_rca(state["alert"], state["evidence"], state.get("hypotheses", [])).model_dump()
+        rca = self.agent.write_rca(state["alert"], state["evidence"], state.get("hypotheses", []),
+                                   state["incident_id"]).model_dump()
         verified = 0
         for claim in rca["claims"]:
             if claim["verified"]:
@@ -280,7 +285,7 @@ class IncidentWorkflow:
         return {"rca": rca, "timeline": timeline}
 
     def plan_fix(self, state):
-        plan = self.agent.plan_fix(state["alert"], state["rca"], state["evidence"]).model_dump()
+        plan = self.agent.plan_fix(state["alert"], state["rca"], state["evidence"], state["incident_id"]).model_dump()
         message = plan["action"] + " " + str(plan["arguments"]) + " - " + plan["reason"]
         timeline = self.add_event(state["timeline"], "plan", message)
         return {"plan": plan, "timeline": timeline}

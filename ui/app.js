@@ -90,7 +90,8 @@ async function loadSystem() {
     '<span class="chip"><b>MODEL</b>' + esc(info.llm) + "</span>" +
     '<span class="chip"><b>RETRIEVAL</b>' + esc(info.retrieval) + "</span>" +
     '<span class="chip"><b>TOOLS</b>' + esc(info.tools) + "</span>";
-  if (info.llm === "DemoLLM") { showDemoBanner(); }
+  document.getElementById("server-model").textContent = "(" + info.llm + ")";
+  if (info.scripted) { showDemoBanner(); }
 }
 
 function showDemoBanner() {
@@ -124,9 +125,31 @@ async function loadScenarios() {
   document.getElementById("scenarios").innerHTML = html;
 }
 
+function usingOwnKey() {
+  return document.querySelector('input[name="model-choice"]:checked').value === "own";
+}
+
+function ownModelChoice() {
+  // The key is only read from the input box and sent with this request. It is never stored in the browser.
+  return {
+    provider: document.getElementById("provider").value,
+    api_key: document.getElementById("api-key").value.trim(),
+    model: document.getElementById("model-name").value.trim()
+  };
+}
+
 async function trigger(name, button) {
+  var options = { method: "POST" };
+  if (usingOwnKey()) {
+    var choice = ownModelChoice();
+    if (choice.api_key.length < 10) {
+      toast("Paste your API key first, or choose the server model.");
+      return;
+    }
+    options = { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(choice) };
+  }
   button.disabled = true;
-  var incident = await api("/scenarios/" + encodeURIComponent(name) + "/trigger", { method: "POST" });
+  var incident = await api("/scenarios/" + encodeURIComponent(name) + "/trigger", options);
   button.disabled = false;
   if (incident) {
     select(incident.id);
@@ -229,6 +252,7 @@ function renderHeader(incident, state) {
         "<span>" + esc(incident.id) + "</span>" +
         '<span class="status ' + esc(incident.status) + '">' + esc(prettyStatus(incident.status)) + "</span>" +
         "<span>" + seconds.toFixed(1) + "s since the alert</span>" +
+        (state.llm ? '<span class="chip model-chip">' + esc(state.llm) + "</span>" : "") +
         '<span class="head-actions">' + report + "</span>" +
       "</div>" +
       '<h1 class="incident-title">' + esc(incident.title) + "</h1>" +
@@ -363,7 +387,9 @@ function renderBanner(incident, state) {
            ". Nothing was changed without approval.</p></section>";
   }
   if (status === "error") {
-    return '<section class="banner bad"><h3>The workflow stopped</h3><p>The last checkpoint is saved. ' +
+    var errors = (state.timeline || []).filter(function (event) { return event.stage === "error"; });
+    var lastError = errors.length > 0 ? '<p class="small" style="margin-top:8px">' + esc(errors[errors.length - 1].message) + "</p>" : "";
+    return '<section class="banner bad"><h3>The workflow stopped</h3>' + lastError + '<p>The last checkpoint is saved. ' +
            'Retry continues from there, no work is lost.</p><p style="margin-top:10px">' +
            '<button class="link-button" data-retry="1">Retry from checkpoint</button></p></section>';
   }
@@ -530,6 +556,12 @@ document.addEventListener("click", function (event) {
   else if (target.dataset.decide) { decide(target.dataset.decide === "yes", target); }
   else if (target.dataset.retry) { retry(); }
   else if (target.dataset.ev) { showEvidence(target.dataset.ev, true); }
+});
+
+document.addEventListener("change", function (event) {
+  if (event.target.name === "model-choice") {
+    document.getElementById("own-key").hidden = !usingOwnKey();
+  }
 });
 
 document.addEventListener("toggle", function (event) {

@@ -40,6 +40,7 @@ Most agent demos trust whatever the model writes. IncidentPilot treats the LLM a
 | 🛡️ | **Prompt-injection guardrail** | Logs contain text written by outsiders. Instruction-like text in a tool result is quarantined before the model sees it and shown to the reviewer instead. |
 | ✋ | **Human-in-the-loop** | Every change passes a plain-Python policy (allow-list, change freeze, blast radius, replica limits) and pauses the LangGraph run with `interrupt()` until a human approves, even across a server restart. |
 | ♻️ | **Verify and self-correct** | Recovery is checked by code against the SLO, never by asking the model. A failed fix becomes new evidence, refutes a hypothesis, and the agent tries again before escalating. |
+| 🔑 | **Bring your own model** | Visitors use the server's model (a real LLM with a scripted fallback, or the scripted model if no key is configured). Anyone can instead paste their own Claude, GPT or Gemini key for one run: it stays in server memory only, is never saved or shown, and is removed from every error message. |
 | 📊 | **Evaluation harness** | Six adversarial scenarios (red-herring deploy, failed first fix, injection, no-answer case) scored on outcome, exact fix, unsafe actions, rejection safety and grounding. |
 
 ---
@@ -191,6 +192,8 @@ The first run downloads two small models (~200 MB: embeddings and reranker). Set
 python main.py serve --demo          # open http://127.0.0.1:8000   ·   API docs at /docs
 ```
 
+In the UI, choose **Use my own API key** to run any drill on Claude, GPT or Gemini with your own key.
+
 **2. Terminal:**
 
 ```bash
@@ -202,11 +205,12 @@ python main.py run bad_deploy_checkout --demo --auto-approve
 or `OLLAMA_BASE_URL`, then:
 
 ```bash
-python main.py serve
+python main.py check-llm             # one test prompt: confirms the key and model work
+python main.py serve                 # uses that model; an incident whose first call fails falls back to the scripted model
 python evaluate.py --runs 5
 ```
 
-**4. Tests** (137 tests, about 4 seconds, no network):
+**4. Tests** (148 tests, about 4 seconds, no network):
 
 ```bash
 python -m pytest -q
@@ -321,7 +325,7 @@ adding capability.
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/scenarios` | available scenarios and what each one tests |
-| `POST` | `/scenarios/{name}/trigger` | start an incident from a scenario |
+| `POST` | `/scenarios/{name}/trigger` | start an incident from a scenario; optional body `{"provider", "api_key", "model"}` runs it on your own model |
 | `POST` | `/incidents` | start an incident from an alert payload (webhook style) |
 | `GET` | `/incidents` · `/incidents/{id}` | list incidents · full state: evidence, hypotheses, claims, plan, timeline |
 | `POST` | `/incidents/{id}/approval` | `{"approved": true, "reviewer": "alice"}` resumes the paused run |
@@ -376,7 +380,7 @@ All settings are environment variables; see [`.env.example`](.env.example).
 
 ## Testing
 
-137 tests run in about four seconds with no network and no API key. Fake models drive the full graph:
+148 tests run in about four seconds with no network and no API key. Fake models drive the full graph:
 
 - a scripted model replies in a fixed order, to test retries and fallbacks;
 - a spy records every prompt, to prove injected text never reaches the model;
@@ -397,7 +401,8 @@ Covered behaviour includes:
 - **Replay, not live:** tools read recorded scenario files and verification is replay-based.
 - **Lexical grounding:** it checks that facts and key words are present in the cited evidence, not meaning (*"memory is not the cause"* uses the same words as *"memory is the cause"*).
 - **Pattern-based guardrail:** a reworded injection can pass it, so it is one layer behind read-only tools, policy and human approval.
-- **No authentication:** the API has no login, and `reviewer` is a plain name. It binds to `127.0.0.1` by default; do not expose it publicly.
+- **No authentication:** the API has no login, and `reviewer` is a plain name. Every visitor sees every incident and can approve it.
+  Keys brought by visitors are held in memory only for their incident and redacted from errors, but use keys with a spending limit.
 - **Single process:** SQLite storage, no job queue, no approval timeout.
 
 **Roadmap**

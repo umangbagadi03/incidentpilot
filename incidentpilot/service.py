@@ -11,6 +11,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.types import Command
 
 from incidentpilot.agent import IncidentAgent
+from incidentpilot.llm import describe_llm, is_scripted, redact_secrets
 from incidentpilot.metrics import INCIDENTS_FINISHED
 from incidentpilot.rag import build_retriever, load_documents
 from incidentpilot.schemas import Alert
@@ -37,7 +38,10 @@ class IncidentService:
         self.store = store
         self.tools = tools
         self.retriever = retriever
-        self.llm = llm
+        self.llm = llm                       # the server's default model
+        # incident id -> the model for that incident ("bring your own key", or a per-incident fallback).
+        # Kept ONLY in memory: an API key is never written to SQLite, the state, the logs or the report.
+        self.incident_llms = {}
         self.callbacks = get_callbacks(settings)
 
     def config_for(self, incident_id):
@@ -50,22 +54,32 @@ class IncidentService:
     def health(self):
         return {
             "status": "ok",
-            "llm": type(self.llm).__name__,
+            "llm": describe_llm(self.llm),
+            "scripted": is_scripted(self.llm),
             "retrieval": self.retriever.describe(),
             "tools": "replay (recorded scenarios)",
         }
 
     # ---------- starting ----------
 
-    def trigger_scenario(self, scenario_name):
+    def llm_for(self, incident_id):
+        """The model for this incident: its own if one was chosen, else the server default."""
+        if incident_id in self.incident_llms:
+            return self.incident_llms[incident_id]
+        return self.llm
+
+    def trigger_scenario(self, scenario_name, llm=None):
         try:
             alert = self.tools.load_alert(scenario_name)
         except ToolError as error:
             raise ServiceError("not_found", str(error))
-        return self.start_incident(alert, scenario_name)
+        return self.start_incident(alert, scenario_name, llm)
 
-    def start_incident(self, alert, scenario=""):
-        """Create the incident row. Call run() afterwards to start the graph."""
+    def start_incident(self, alert, scenario="", llm=None):
+        """Create the incident row. Call run() afterwards to start the graph.
+
+        llm: an optional model for this incident only (for example built from the visitor's own API key).
+        """
         try:
             alert = Alert.model_validate(alert).model_dump()
         except ValueError as error:
@@ -74,7 +88,12 @@ class IncidentService:
             self.tools.scenario_for(alert["service"])
         except ToolError as error:
             raise ServiceError("bad_request", str(error))
-        return self.store.create(alert, scenario)
+        incident = self.store.create(alert, scenario)
+        if llm is not None:
+            self.incident_llms[incident["id"]] = llm
+        elif hasattr(self.llm, "fresh"):
+            self.incident_llms[incident["id"]] = self.llm.fresh()     # the fallback switch is per incident
+        return incident
 
     def initial_input(self, incident):
         alert = {
@@ -86,7 +105,9 @@ class IncidentService:
         if incident["scenario"] != "":
             # Only the known alert fields go to the LLM (an extra field in a file cannot sneak into the prompt).
             alert = Alert.model_validate(self.tools.load_alert(incident["scenario"])).model_dump()
-        return new_state(incident["id"], alert, incident["scenario"])
+        state = new_state(incident["id"], alert, incident["scenario"])
+        state["llm"] = describe_llm(self.llm_for(incident["id"]))     # shown in the UI from the first second
+        return state
 
     # ---------- running ----------
 
@@ -100,7 +121,7 @@ class IncidentService:
             for update in self.graph.stream(graph_input, self.config_for(incident_id), stream_mode="updates"):
                 self.sync(incident_id)
         except Exception as error:
-            log.exception("incident %s failed", incident_id)
+            log.error("incident %s failed: %s", incident_id, self.safe_error(incident_id, error))
             self.fail(incident_id, error)
             return
         self.sync(incident_id)
@@ -113,12 +134,19 @@ class IncidentService:
         self.store.update(incident_id, status, values)
         if status in TERMINAL_STATUSES and previous not in TERMINAL_STATUSES:
             INCIDENTS_FINISHED.labels(status=status).inc()
+        if status in ["resolved", "escalated"]:
+            self.incident_llms.pop(incident_id, None)       # forget the model (and any key) once it is done
+
+    def safe_error(self, incident_id, error):
+        """The error text with any API key removed (provider errors can quote part of a key)."""
+        secret = getattr(self.llm_for(incident_id), "api_key", "")
+        return redact_secrets(str(error), [secret])
 
     def fail(self, incident_id, error):
         """The graph crashed (for example the LLM API was down). The checkpoint is kept, so retry() can continue."""
         values = dict(self.graph.get_state(self.config_for(incident_id)).values)
         timeline = list(values.get("timeline", []))
-        timeline.append({"time": time.strftime("%H:%M:%S"), "stage": "error", "message": "workflow error: " + str(error)})
+        timeline.append({"time": time.strftime("%H:%M:%S"), "stage": "error", "message": "workflow error: " + self.safe_error(incident_id, error)})
         values["timeline"] = timeline
         self.store.update(incident_id, "error", values)
         INCIDENTS_FINISHED.labels(status="error").inc()
@@ -181,7 +209,7 @@ def build_service(settings, llm, retriever=None, verbose=False):
     if retriever is None:
         documents = load_documents(settings.knowledge_dir, settings.learned_dir)
         retriever = build_retriever(settings, documents)
-    agent = IncidentAgent(llm)
+    agent = IncidentAgent(llm)          # llm_for is connected below, once the service exists
     workflow = IncidentWorkflow(tools, retriever, agent, settings, verbose=verbose)
 
     # Checkpoints are stored in SQLite, so a paused incident survives a restart of the server.
@@ -190,7 +218,9 @@ def build_service(settings, llm, retriever=None, verbose=False):
     graph = workflow.build(SqliteSaver(connection))
 
     store = IncidentStore(settings.db_path)
-    return IncidentService(settings, graph, store, tools, retriever, llm)
+    service = IncidentService(settings, graph, store, tools, retriever, llm)
+    agent.llm_for = service.llm_for
+    return service
 
 
 def run_to_end(service, incident_id, approver, max_rounds=10):

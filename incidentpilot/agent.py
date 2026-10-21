@@ -12,7 +12,22 @@ import json
 
 from incidentpilot import prompts
 from incidentpilot.grounding import ground_rca
+from incidentpilot.llm import describe_llm, redact_secrets
 from incidentpilot.schemas import Decision, Plan, RCA
+
+
+class LLMError(RuntimeError):
+    """An LLM call failed. The message never contains an API key."""
+    pass
+
+
+def call_llm(llm, prompt):
+    """Call the model. A provider error can quote part of the API key, and LangGraph saves the error of a
+    failed step in its checkpoint, so the error is re-raised with every key removed."""
+    try:
+        return llm.complete(prompts.SYSTEM, prompt)
+    except Exception as error:
+        raise LLMError(redact_secrets(str(error), [getattr(llm, "api_key", "")])) from None
 
 
 def parse_json(text):
@@ -80,12 +95,22 @@ def check_plan(plan):
 
 
 class IncidentAgent:
-    def __init__(self, llm):
-        self.llm = llm
+    def __init__(self, llm, llm_for=None):
+        self.llm = llm               # the default model
+        self.llm_for = llm_for       # optional: incident id -> the model chosen for that incident
 
-    def ask(self, prompt, model_class, extra_check=None):
+    def model_for(self, incident_id):
+        if self.llm_for is not None and incident_id != "":
+            return self.llm_for(incident_id)
+        return self.llm
+
+    def label_for(self, incident_id):
+        return describe_llm(self.model_for(incident_id))
+
+    def ask(self, prompt, model_class, extra_check=None, incident_id=""):
         """Ask the LLM and parse the answer into a Pydantic model. One retry if the answer is invalid."""
-        reply = self.llm.complete(prompts.SYSTEM, prompt)
+        llm = self.model_for(incident_id)
+        reply = call_llm(llm, prompt)
         try:
             return self.parse(reply, model_class, extra_check)
         except ValueError as error:      # JSON errors and Pydantic ValidationError are both ValueError
@@ -93,7 +118,7 @@ class IncidentAgent:
                 prompt + "\n\nYour previous reply was invalid (" + str(error) + "). "
                 "Reply again with only the JSON object."
             )
-            reply = self.llm.complete(prompts.SYSTEM, retry_prompt)
+            reply = call_llm(llm, retry_prompt)
             return self.parse(reply, model_class, extra_check)
 
     def parse(self, reply, model_class, extra_check):
@@ -102,7 +127,7 @@ class IncidentAgent:
             extra_check(model)
         return model
 
-    def decide_next_step(self, alert, evidence_list, step, max_steps, hypotheses=None):
+    def decide_next_step(self, alert, evidence_list, step, max_steps, hypotheses=None, incident_id=""):
         prompt = prompts.fill(prompts.DECIDE_NEXT_STEP, {
             "ALERT": json.dumps(alert),
             "EVIDENCE": evidence_for_prompt(evidence_list),
@@ -112,19 +137,19 @@ class IncidentAgent:
             "SERVICE": alert["service"],
         })
         try:
-            return self.ask(prompt, Decision, check_decision)
+            return self.ask(prompt, Decision, check_decision, incident_id)
         except ValueError:
             # Safe fallback: stop investigating. The RCA step says "inconclusive" if the evidence is thin.
             return Decision(action="finish", reason="could not get a valid decision from the LLM")
 
-    def write_rca(self, alert, evidence_list, hypotheses=None):
+    def write_rca(self, alert, evidence_list, hypotheses=None, incident_id=""):
         prompt = prompts.fill(prompts.WRITE_RCA, {
             "ALERT": json.dumps(alert),
             "EVIDENCE": evidence_for_prompt(evidence_list),
             "HYPOTHESES": hypotheses_for_prompt(hypotheses),
         })
         try:
-            rca = self.ask(prompt, RCA)
+            rca = self.ask(prompt, RCA, None, incident_id)
         except ValueError:
             return RCA(
                 root_cause="RCA could not be written (invalid LLM output)",
@@ -137,7 +162,7 @@ class IncidentAgent:
         checked = ground_rca(rca.model_dump(), evidence_list)
         return RCA.model_validate(checked)
 
-    def plan_fix(self, alert, rca, evidence_list):
+    def plan_fix(self, alert, rca, evidence_list, incident_id=""):
         service = alert["service"]
 
         # Earlier fixes that did not work (the verify step stores them as evidence).
@@ -158,7 +183,7 @@ class IncidentAgent:
             "SERVICE": service,
         })
         try:
-            plan = self.ask(prompt, Plan, check_plan)
+            plan = self.ask(prompt, Plan, check_plan, incident_id)
         except ValueError:
             return Plan(action="escalate", service=service, reason="could not get a valid fix from the LLM")
         if plan.service == "":

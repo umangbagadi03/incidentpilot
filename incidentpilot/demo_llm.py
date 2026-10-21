@@ -402,6 +402,9 @@ SCRIPTS = {
 
 
 class DemoLLM:
+    label = "Scripted (offline)"
+    scripted = True          # never calls a real LLM
+
     def __init__(self, plan_override=None, delay_seconds=0.0):
         # plan_override lets a test force a specific (for example wrong) fix.
         self.plan_override = plan_override

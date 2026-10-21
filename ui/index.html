@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/ui/style.css">
+<link rel="stylesheet" href="/ui/style.css?v=2">
 </head>
 <body>
 
@@ -18,6 +18,26 @@
 
 <div class="layout">
   <aside class="sidebar">
+    <section>
+      <h2 class="label">Model</h2>
+      <div class="model-box">
+        <label class="choice"><input type="radio" name="model-choice" value="server" checked>
+          <span>Server model <span id="server-model" class="muted small"></span></span></label>
+        <label class="choice"><input type="radio" name="model-choice" value="own">
+          <span>Use my own API key</span></label>
+        <div id="own-key" class="own-key" hidden>
+          <select id="provider" aria-label="Provider">
+            <option value="anthropic">Claude (Anthropic)</option>
+            <option value="openai">GPT (OpenAI)</option>
+            <option value="gemini">Gemini (Google)</option>
+          </select>
+          <input id="api-key" type="password" placeholder="Paste your API key" autocomplete="off" spellcheck="false">
+          <input id="model-name" placeholder="Model (optional, a default is used)" autocomplete="off" spellcheck="false">
+          <p class="small muted">Used only for the drills you start now. It stays in server memory for that run and is
+            never saved, logged or shown. Tip: use a key with a spending limit.</p>
+        </div>
+      </div>
+    </section>
     <section>
       <h2 class="label">Run a drill</h2>
       <div id="scenarios" class="scenario-list"></div>
@@ -31,6 +51,6 @@
   <main id="detail" class="detail"></main>
 </div>
 
-<script src="/ui/app.js"></script>
+<script src="/ui/app.js?v=2"></script>
 </body>
 </html>

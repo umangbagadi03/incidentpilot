@@ -4,14 +4,16 @@ Starting an incident returns at once. The graph runs in a background task, so yo
 GET /incidents/{id}. When the status is "waiting_approval", answer with POST /incidents/{id}/approval.
 """
 import os
+from typing import Literal, Optional
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from incidentpilot.config import ROOT
+from incidentpilot.llm import make_llm, redact_secrets
 from incidentpilot.service import ServiceError
 
 STATUS_CODES = {"bad_request": 400, "not_found": 404, "conflict": 409}
@@ -22,6 +24,24 @@ class AlertRequest(BaseModel):
     title: str
     description: str = ""
     severity: str = "high"
+
+
+class ModelChoice(BaseModel):
+    """Bring your own key: run ONE incident on this model. The key stays in memory only."""
+    provider: Literal["anthropic", "openai", "gemini"]
+    api_key: str = Field(min_length=10, max_length=400)
+    model: str = Field(default="", max_length=100)
+
+
+def build_model(choice):
+    """Turn the request into a model object, or None for the server's default model."""
+    if choice is None:
+        return None
+    try:
+        return make_llm(choice.provider, choice.api_key.strip(), choice.model.strip())
+    except Exception as error:
+        raise HTTPException(status_code=400, detail="could not set up the model: "
+                            + redact_secrets(str(error), [choice.api_key]))
 
 
 class ApprovalRequest(BaseModel):
@@ -63,10 +83,11 @@ def create_app(service):
         return scenarios
 
     @app.post("/scenarios/{name}/trigger")
-    def trigger_scenario(name: str, background: BackgroundTasks):
-        """Start an incident from a recorded scenario."""
+    def trigger_scenario(name: str, background: BackgroundTasks, choice: Optional[ModelChoice] = None):
+        """Start an incident from a recorded scenario. Optional body: your own model and API key."""
+        llm = build_model(choice)
         try:
-            incident = service.trigger_scenario(name)
+            incident = service.trigger_scenario(name, llm)
         except ServiceError as error:
             raise http_error(error)
         background.add_task(service.run, incident["id"], service.initial_input(incident))

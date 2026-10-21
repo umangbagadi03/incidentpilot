@@ -170,6 +170,26 @@ a { color: inherit; }
 .sev.high { background: var(--signal); }
 .sev.medium { background: var(--warn); }
 
+/* ---------- model choice ---------- */
+
+.model-box { display: grid; gap: 6px; }
+.choice { display: flex; gap: 8px; align-items: baseline; font-size: 13px; cursor: pointer; }
+.choice input { accent-color: var(--signal); }
+.own-key { display: grid; gap: 6px; margin-top: 4px; padding: 10px; border: 1px dashed var(--rule-strong); border-radius: 4px; }
+.own-key[hidden] { display: none; }
+.own-key select, .own-key input {
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 8px;
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+  background: var(--paper);
+  color: var(--ink);
+  width: 100%;
+}
+.own-key p { margin: 0; line-height: 1.4; }
+.chip.model-chip { border-color: var(--signal); color: var(--signal); }
+
 /* ---------- incident list ---------- */
 
 .incident-list { display: flex; flex-direction: column; }

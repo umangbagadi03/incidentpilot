@@ -10,10 +10,11 @@ Drop --demo to use a real LLM (set ANTHROPIC_API_KEY or OPENAI_API_KEY in .env).
 import argparse
 import logging
 import os
+import time
 
 from incidentpilot.config import Settings
 from incidentpilot.demo_llm import DemoLLM
-from incidentpilot.llm import get_llm
+from incidentpilot.llm import FallbackLLM, describe_llm, get_llm
 from incidentpilot.service import build_service, run_to_end
 from incidentpilot.tools import ScenarioTools
 
@@ -37,6 +38,35 @@ def choose_llm(settings, use_demo, demo_delay=0.0):
     if use_demo:
         return DemoLLM(delay_seconds=demo_delay)
     return get_llm(settings)
+
+
+def server_llm(settings, use_demo):
+    """The model the web server uses when a visitor does not bring their own key.
+
+    --demo: always the scripted model. Otherwise: the configured model (API key in the environment),
+    falling back to the scripted model for an incident whose first call fails (quota, network).
+    No key at all: the scripted model, so the demo still works.
+    """
+    scripted = DemoLLM(delay_seconds=0.6)      # waits a little per "call", so you can watch the steps
+    if use_demo:
+        return scripted
+    try:
+        real = get_llm(settings)
+    except RuntimeError as error:
+        print("No LLM configured (" + str(error).split(".")[0] + "). Using the scripted model.")
+        return scripted
+    return FallbackLLM(real, scripted)
+
+
+def check_llm_command(args):
+    """Send one tiny prompt to the configured model: a 5-second check that the key and model work."""
+    settings = Settings()
+    llm = get_llm(settings)
+    start = time.time()
+    reply = llm.complete("Reply with ONE JSON object and nothing else.", 'Reply with {"ok": true}.')
+    print("model : " + describe_llm(llm))
+    print("time  : " + str(round(time.time() - start, 2)) + "s")
+    print("reply : " + reply.strip()[:200])
 
 
 def run_command(args):
@@ -64,12 +94,11 @@ def serve_command(args):
     from incidentpilot.api import create_app
 
     settings = Settings()
-    # In the UI demo every scripted "LLM call" waits 0.6s, so you can watch the agent work step by step.
-    service = build_service(settings, choose_llm(settings, args.demo, demo_delay=0.6))
+    service = build_service(settings, server_llm(settings, args.demo))
     stuck = service.mark_interrupted()
     if stuck > 0:
         print(str(stuck) + " incident(s) were running when the server stopped. Retry them from the UI or the API.")
-    print("LLM: " + type(service.llm).__name__ + " | retrieval: " + service.retriever.describe())
+    print("LLM: " + describe_llm(service.llm) + " | retrieval: " + service.retriever.describe())
     uvicorn.run(create_app(service), host=settings.host, port=settings.port)
 
 
@@ -87,7 +116,9 @@ def main():
     run_parser.add_argument("--auto-approve", action="store_true", help="approve automatically")
 
     serve_parser = commands.add_parser("serve", help="start the API and the UI")
-    serve_parser.add_argument("--demo", action="store_true", help="use the scripted demo model (no API key)")
+    serve_parser.add_argument("--demo", action="store_true", help="always use the scripted demo model")
+
+    commands.add_parser("check-llm", help="send one test prompt to the configured model")
 
     args = parser.parse_args()
     if args.command == "scenarios":
@@ -98,6 +129,8 @@ def main():
         run_command(args)
     elif args.command == "serve":
         serve_command(args)
+    elif args.command == "check-llm":
+        check_llm_command(args)
     else:
         parser.print_help()
 
