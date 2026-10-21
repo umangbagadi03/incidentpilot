@@ -412,7 +412,7 @@ Covered behaviour includes:
 
 ## Author
 
-**Umang Bagadi**, GenAI Developer at TCS Research & Incubation · [LinkedIn](https://www.linkedin.com/in/umang-bagadi)
+**Umang Bagadi**, GenAI Developer · [LinkedIn](https://www.linkedin.com/in/umang-bagadi)
 
 ## License
 
