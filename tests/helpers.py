@@ -5,7 +5,7 @@ import re
 import tempfile
 
 from incidentpilot.config import Settings
-from incidentpilot.demo_llm import DemoLLM
+from incidentpilot.scripted_llm import ScriptedLLM
 from incidentpilot.rag import HybridRetriever, load_documents
 from incidentpilot.service import build_service
 
@@ -31,7 +31,7 @@ def make_retriever(settings):
 
 def make_service(llm=None, settings=None, retriever=None):
     if llm is None:
-        llm = DemoLLM()
+        llm = ScriptedLLM()
     if settings is None:
         settings = make_settings()
     if retriever is None:
@@ -74,7 +74,7 @@ class FakeReranker:
         return scores
 
 
-class ScriptedLLM:
+class ReplyListLLM:
     """Returns the given replies one by one. Also counts how many times it was called."""
 
     def __init__(self, replies):

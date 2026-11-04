@@ -3,7 +3,7 @@ import unittest
 
 from incidentpilot.agent import IncidentAgent
 from incidentpilot.grounding import check_claim, clean_hypotheses, extract_facts, ground_rca
-from tests.helpers import ScriptedLLM, json_reply, make_evidence
+from tests.helpers import ReplyListLLM, json_reply, make_evidence
 
 ALERT = {"service": "checkout", "title": "test alert"}
 
@@ -131,7 +131,7 @@ class TestGroundRca(unittest.TestCase):
 
     def test_agent_applies_the_grounding_check(self):
         reply = json_reply(rca_with_claims([{"text": "The error rate is 45%.", "evidence_ids": ["E3"]}]))
-        rca = IncidentAgent(ScriptedLLM([reply])).write_rca(ALERT, [STATUS])
+        rca = IncidentAgent(ReplyListLLM([reply])).write_rca(ALERT, [STATUS])
         self.assertTrue(rca.inconclusive)
         self.assertEqual(rca.grounding_score, 0.0)
 

@@ -401,7 +401,7 @@ SCRIPTS = {
 }
 
 
-class DemoLLM:
+class ScriptedLLM:
     label = "Scripted (offline)"
     scripted = True          # never calls a real LLM
 
@@ -418,7 +418,7 @@ class DemoLLM:
             service = json.loads(match.group(1)).get("service", "")
             if service in SCRIPTS:
                 return SCRIPTS[service]
-        raise ValueError("DemoLLM has no script for this alert")
+        raise ValueError("ScriptedLLM has no script for this alert")
 
     def complete(self, system, user):
         if self.delay_seconds > 0:
@@ -456,4 +456,4 @@ class DemoLLM:
                 return json.dumps(script["plan_after_failure"])
             return json.dumps(script["plan"])
 
-        raise ValueError("DemoLLM does not know this task")
+        raise ValueError("ScriptedLLM does not know this task")

@@ -13,7 +13,7 @@ import os
 import time
 
 from incidentpilot.config import Settings
-from incidentpilot.demo_llm import DemoLLM
+from incidentpilot.scripted_llm import ScriptedLLM
 from incidentpilot.llm import FallbackLLM, describe_llm, get_llm
 from incidentpilot.service import build_service, run_to_end
 from incidentpilot.tools import ScenarioTools
@@ -36,7 +36,7 @@ def terminal_approver(approval):
 
 def choose_llm(settings, use_demo, demo_delay=0.0):
     if use_demo:
-        return DemoLLM(delay_seconds=demo_delay)
+        return ScriptedLLM(delay_seconds=demo_delay)
     return get_llm(settings)
 
 
@@ -47,7 +47,7 @@ def server_llm(settings, use_demo):
     falling back to the scripted model for an incident whose first call fails (quota, network).
     No key at all: the scripted model, so the demo still works.
     """
-    scripted = DemoLLM(delay_seconds=0.6)      # waits a little per "call", so you can watch the steps
+    scripted = ScriptedLLM(delay_seconds=0.6)      # waits a little per "call", so you can watch the steps
     if use_demo:
         return scripted
     try:

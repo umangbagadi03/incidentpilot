@@ -28,7 +28,7 @@ import tempfile
 import time
 
 from incidentpilot.config import Settings
-from incidentpilot.demo_llm import DemoLLM
+from incidentpilot.scripted_llm import ScriptedLLM
 from incidentpilot.llm import get_llm
 from incidentpilot.rag import build_retriever, load_documents
 from incidentpilot.service import build_service, run_to_end
@@ -202,7 +202,7 @@ def main():
     # Build the retriever once (loading the models takes a few seconds). Learned postmortems are not included.
     retriever = build_retriever(settings, load_documents(settings.knowledge_dir))
     if args.demo:
-        model_name = "DemoLLM (scripted)"
+        model_name = "ScriptedLLM"
     else:
         model_name = type(get_llm(settings)).__name__ + " " + settings.llm_model
     print("model: " + model_name + " | retrieval: " + retriever.describe())
@@ -218,7 +218,7 @@ def main():
         results = []
         for run_number in range(args.runs):
             if args.demo:
-                llm = DemoLLM()
+                llm = ScriptedLLM()
             else:
                 llm = get_llm(settings)
             results.append(run_and_score(llm, retriever, name))
@@ -239,7 +239,7 @@ def main():
         reject_result = "-"
         if ScenarioTools(settings.scenarios_dir).load_expected(name)["outcome"] == "resolved":
             if args.demo:
-                reject_llm = DemoLLM()
+                reject_llm = ScriptedLLM()
             else:
                 reject_llm = get_llm(settings)
             reject_failures = check_rejection(reject_llm, retriever, name)

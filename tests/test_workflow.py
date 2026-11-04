@@ -4,7 +4,7 @@ import os
 import unittest
 
 from evaluate import evaluate_one_run
-from incidentpilot.demo_llm import DemoLLM
+from incidentpilot.scripted_llm import ScriptedLLM
 from incidentpilot.rag import build_retriever, load_documents
 from incidentpilot.service import ServiceError, build_service, run_to_end
 from tests.helpers import approve_no, approve_yes, json_reply, make_service, make_settings
@@ -49,7 +49,7 @@ class TestHappyPaths(unittest.TestCase):
         settings = make_settings()
         retriever = build_retriever(settings, load_documents(settings.knowledge_dir))
         for name in make_service().tools.list_scenarios():
-            self.assertEqual(evaluate_one_run(settings, DemoLLM(), retriever, name), [], name)
+            self.assertEqual(evaluate_one_run(settings, ScriptedLLM(), retriever, name), [], name)
 
 
 class TestHarderScenarios(unittest.TestCase):
@@ -99,12 +99,12 @@ class TestHarderScenarios(unittest.TestCase):
         self.assertIn("Hypothesis board", final["state"]["report"])
 
     def test_board_claims_without_evidence_are_downgraded(self):
-        class OverconfidentLLM(DemoLLM):
+        class OverconfidentLLM(ScriptedLLM):
             def complete(self, system, user):
                 if "TASK: decide_next_step" in user:
                     return json_reply({"action": "finish", "hypotheses": [
                         {"id": "H1", "statement": "it is DNS", "status": "supported", "evidence_ids": ["E42"]}]})
-                return DemoLLM.complete(self, system, user)
+                return ScriptedLLM.complete(self, system, user)
 
         service = make_service(OverconfidentLLM())
         incident = service.trigger_scenario("bad_deploy_checkout")
@@ -182,7 +182,7 @@ class TestSafety(unittest.TestCase):
 
     def test_fix_for_another_service_is_denied(self):
         plan = {"action": "restart_service", "service": "payments", "arguments": {}, "reason": "wrong service"}
-        service = make_service(DemoLLM(plan_override=plan))
+        service = make_service(ScriptedLLM(plan_override=plan))
         final = run_scenario(service, "bad_deploy_checkout")
         self.assertEqual(final["state"]["policy"]["decision"], "deny")
         self.assertEqual(final["status"], "escalated")
@@ -203,7 +203,7 @@ class TestSafety(unittest.TestCase):
 class TestVerificationLoop(unittest.TestCase):
     def test_wrong_fix_is_caught_and_retried_then_escalated(self):
         plan = {"action": "restart_service", "service": "checkout", "arguments": {}, "reason": "wrong on purpose"}
-        service = make_service(DemoLLM(plan_override=plan))
+        service = make_service(ScriptedLLM(plan_override=plan))
         final = run_scenario(service, "bad_deploy_checkout")
 
         self.assertEqual(final["status"], "escalated")
@@ -214,7 +214,7 @@ class TestVerificationLoop(unittest.TestCase):
         self.assertEqual(tools_used.count("verify_after_fix"), 2)
 
     def test_second_attempt_can_succeed(self):
-        class WrongThenRightLLM(DemoLLM):
+        class WrongThenRightLLM(ScriptedLLM):
             def complete(self, system, user):
                 if "TASK: plan_fix" in user:
                     if "Failed checks:" in user:          # only appears once a fix has really failed
@@ -222,7 +222,7 @@ class TestVerificationLoop(unittest.TestCase):
                                            "arguments": {"to_version": "2.13.4"}, "reason": "second try"})
                     return json_reply({"action": "restart_service", "service": "checkout",
                                        "arguments": {}, "reason": "first try"})
-                return DemoLLM.complete(self, system, user)
+                return ScriptedLLM.complete(self, system, user)
 
         service = make_service(WrongThenRightLLM())
         final = run_scenario(service, "bad_deploy_checkout")
@@ -236,11 +236,11 @@ class TestVerificationLoop(unittest.TestCase):
 
 class TestInvestigation(unittest.TestCase):
     def test_step_limit_is_respected(self):
-        class NeverStopsLLM(DemoLLM):
+        class NeverStopsLLM(ScriptedLLM):
             def complete(self, system, user):
                 if "TASK: decide_next_step" in user:
                     return json_reply({"action": "call_tool", "tool": "get_service_status", "arguments": {}})
-                return DemoLLM.complete(self, system, user)
+                return ScriptedLLM.complete(self, system, user)
 
         settings = make_settings()
         settings.max_steps = 3
@@ -250,7 +250,7 @@ class TestInvestigation(unittest.TestCase):
         self.assertEqual(len(service.get(incident["id"])["state"]["evidence"]), 3)
 
     def test_llm_cannot_read_another_service(self):
-        class CuriousLLM(DemoLLM):
+        class CuriousLLM(ScriptedLLM):
             def complete(self, system, user):
                 if "TASK: decide_next_step" in user:
                     if '"id": "E1"' not in user:
@@ -266,7 +266,7 @@ class TestInvestigation(unittest.TestCase):
         self.assertEqual(first_evidence["arguments"]["service"], "checkout")
 
     def test_tool_error_becomes_failed_evidence_not_a_crash(self):
-        class BadArgumentLLM(DemoLLM):
+        class BadArgumentLLM(ScriptedLLM):
             def complete(self, system, user):
                 if "TASK: decide_next_step" in user:
                     if '"id": "E1"' not in user:
@@ -290,16 +290,16 @@ class TestInvestigation(unittest.TestCase):
 
 class TestCrashRecovery(unittest.TestCase):
     def test_crash_then_retry_continues_from_the_checkpoint(self):
-        class CrashOnceLLM(DemoLLM):
+        class CrashOnceLLM(ScriptedLLM):
             def __init__(self):
-                DemoLLM.__init__(self)
+                ScriptedLLM.__init__(self)
                 self.crashed = False
 
             def complete(self, system, user):
                 if "TASK: write_rca" in user and not self.crashed:
                     self.crashed = True
                     raise RuntimeError("LLM API is down")
-                return DemoLLM.complete(self, system, user)
+                return ScriptedLLM.complete(self, system, user)
 
         service = make_service(CrashOnceLLM())
         incident = service.trigger_scenario("bad_deploy_checkout")

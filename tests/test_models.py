@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 import incidentpilot.api as api_module
 from incidentpilot.api import create_app
-from incidentpilot.demo_llm import DemoLLM
+from incidentpilot.scripted_llm import ScriptedLLM
 from incidentpilot.llm import FallbackLLM, make_llm, redact_secrets
 from incidentpilot.service import run_to_end
 from tests.helpers import approve_yes, make_service, make_settings
@@ -22,13 +22,13 @@ class BrokenLLM:
         raise RuntimeError("429 quota exceeded")
 
 
-class OwnKeyLLM(DemoLLM):
+class OwnKeyLLM(ScriptedLLM):
     """Stands in for a model built from a visitor's key: scripted answers, but it carries the key."""
     label = "OpenAI · gpt-test"
     scripted = False
 
     def __init__(self, fail_on_rca=False):
-        DemoLLM.__init__(self)
+        ScriptedLLM.__init__(self)
         self.api_key = FAKE_KEY
         self.calls = 0
         self.fail_on_rca = fail_on_rca
@@ -37,12 +37,12 @@ class OwnKeyLLM(DemoLLM):
         self.calls = self.calls + 1
         if self.fail_on_rca and "TASK: write_rca" in user:
             raise RuntimeError("Incorrect API key provided: " + FAKE_KEY)
-        return DemoLLM.complete(self, system, user)
+        return ScriptedLLM.complete(self, system, user)
 
 
 class TestFallback(unittest.TestCase):
     def test_first_call_failure_switches_the_incident_to_the_scripted_model(self):
-        llm = FallbackLLM(BrokenLLM(), DemoLLM()).fresh()
+        llm = FallbackLLM(BrokenLLM(), ScriptedLLM()).fresh()
         service = make_service(llm)
         final = run_to_end(service, service.trigger_scenario("bad_deploy_checkout")["id"], approve_yes)
         self.assertEqual(final["status"], "resolved")
@@ -59,13 +59,13 @@ class TestFallback(unittest.TestCase):
                     raise RuntimeError("network down")
                 return '{"action": "finish"}'
 
-        llm = FallbackLLM(FailsLater(), DemoLLM())
+        llm = FallbackLLM(FailsLater(), ScriptedLLM())
         llm.complete("s", "u")
         with self.assertRaises(RuntimeError):
             llm.complete("s", "u")
 
     def test_each_incident_gets_its_own_fallback_switch(self):
-        server = FallbackLLM(BrokenLLM(), DemoLLM())
+        server = FallbackLLM(BrokenLLM(), ScriptedLLM())
         service = make_service(server)
         first = service.trigger_scenario("bad_deploy_checkout")
         second = service.trigger_scenario("memory_leak_payments")

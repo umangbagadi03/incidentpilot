@@ -365,7 +365,7 @@ Interactive docs are served at `/docs`.
 │   ├── service.py          start / stream / pause / resume / retry, state sync
 │   ├── api.py · store.py   FastAPI routes · SQLite incident table
 │   ├── llm.py              Anthropic · OpenAI · Gemini · Ollama behind one interface
-│   ├── demo_llm.py         scripted model for the demo and the tests
+│   ├── scripted_llm.py     scripted model for the live site and the tests
 │   └── metrics.py · tracing.py · report.py · config.py
 ├── scenarios/              six recorded incidents with ground truth
 ├── knowledge/              runbooks and past incidents for retrieval

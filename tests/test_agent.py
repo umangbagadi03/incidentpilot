@@ -1,7 +1,7 @@
 import unittest
 
 from incidentpilot.agent import IncidentAgent, parse_json
-from tests.helpers import ScriptedLLM, json_reply, make_evidence
+from tests.helpers import ReplyListLLM, json_reply, make_evidence
 
 ALERT = {"service": "checkout", "title": "test alert"}
 
@@ -18,23 +18,23 @@ class TestParseJson(unittest.TestCase):
 class TestDecisions(unittest.TestCase):
     def test_invalid_reply_is_retried_once(self):
         good = json_reply({"action": "call_tool", "tool": "get_metrics", "arguments": {}, "reason": "x"})
-        llm = ScriptedLLM(["not json at all", good])
+        llm = ReplyListLLM(["not json at all", good])
         decision = IncidentAgent(llm).decide_next_step(ALERT, [], 1, 6)
         self.assertEqual(decision.tool, "get_metrics")
         self.assertEqual(llm.calls, 2)
 
     def test_two_invalid_replies_fall_back_to_finish(self):
-        decision = IncidentAgent(ScriptedLLM(["nope", "still nope"])).decide_next_step(ALERT, [], 1, 6)
+        decision = IncidentAgent(ReplyListLLM(["nope", "still nope"])).decide_next_step(ALERT, [], 1, 6)
         self.assertEqual(decision.action, "finish")
 
     def test_write_tool_is_not_accepted_for_investigation(self):
         bad = json_reply({"action": "call_tool", "tool": "restart_service", "arguments": {}})
-        decision = IncidentAgent(ScriptedLLM([bad, bad])).decide_next_step(ALERT, [], 1, 6)
+        decision = IncidentAgent(ReplyListLLM([bad, bad])).decide_next_step(ALERT, [], 1, 6)
         self.assertEqual(decision.action, "finish")
 
     def test_call_tool_without_a_tool_is_not_accepted(self):
         bad = json_reply({"action": "call_tool"})
-        decision = IncidentAgent(ScriptedLLM([bad, bad])).decide_next_step(ALERT, [], 1, 6)
+        decision = IncidentAgent(ReplyListLLM([bad, bad])).decide_next_step(ALERT, [], 1, 6)
         self.assertEqual(decision.action, "finish")
 
 
@@ -43,45 +43,45 @@ class TestRca(unittest.TestCase):
         return json_reply({"root_cause": "bad release", "evidence_ids": evidence_ids, "inconclusive": inconclusive})
 
     def test_fake_citations_are_removed(self):
-        rca = IncidentAgent(ScriptedLLM([self.rca_reply(["E1", "E9"])])).write_rca(ALERT, [make_evidence("E1")])
+        rca = IncidentAgent(ReplyListLLM([self.rca_reply(["E1", "E9"])])).write_rca(ALERT, [make_evidence("E1")])
         self.assertEqual(rca.evidence_ids, ["E1"])
         self.assertFalse(rca.inconclusive)
 
     def test_only_fake_citations_make_the_rca_inconclusive(self):
-        rca = IncidentAgent(ScriptedLLM([self.rca_reply(["E7"])])).write_rca(ALERT, [make_evidence("E1")])
+        rca = IncidentAgent(ReplyListLLM([self.rca_reply(["E7"])])).write_rca(ALERT, [make_evidence("E1")])
         self.assertTrue(rca.inconclusive)
         self.assertGreater(len(rca.missing_evidence), 0)
 
     def test_failed_tool_result_cannot_be_cited(self):
-        rca = IncidentAgent(ScriptedLLM([self.rca_reply(["E1"])])).write_rca(ALERT, [make_evidence("E1", ok=False)])
+        rca = IncidentAgent(ReplyListLLM([self.rca_reply(["E1"])])).write_rca(ALERT, [make_evidence("E1", ok=False)])
         self.assertTrue(rca.inconclusive)
 
     def test_out_of_range_confidence_is_retried(self):
         bad = json_reply({"root_cause": "bad release", "evidence_ids": ["E1"], "confidence": 7})
         good = json_reply({"root_cause": "bad release", "evidence_ids": ["E1"], "confidence": 0.7})
-        llm = ScriptedLLM([bad, good])
+        llm = ReplyListLLM([bad, good])
         rca = IncidentAgent(llm).write_rca(ALERT, [make_evidence("E1")])
         self.assertEqual(rca.confidence, 0.7)
         self.assertEqual(llm.calls, 2)
 
     def test_invalid_replies_give_inconclusive_rca(self):
-        rca = IncidentAgent(ScriptedLLM(["bad", "bad"])).write_rca(ALERT, [make_evidence("E1")])
+        rca = IncidentAgent(ReplyListLLM(["bad", "bad"])).write_rca(ALERT, [make_evidence("E1")])
         self.assertTrue(rca.inconclusive)
 
 
 class TestPlan(unittest.TestCase):
     def test_invalid_replies_give_escalate(self):
-        plan = IncidentAgent(ScriptedLLM(["bad", "bad"])).plan_fix(ALERT, {}, [])
+        plan = IncidentAgent(ReplyListLLM(["bad", "bad"])).plan_fix(ALERT, {}, [])
         self.assertEqual(plan.action, "escalate")
 
     def test_unknown_action_is_not_accepted(self):
         bad = json_reply({"action": "format_disk"})
-        plan = IncidentAgent(ScriptedLLM([bad, bad])).plan_fix(ALERT, {}, [])
+        plan = IncidentAgent(ReplyListLLM([bad, bad])).plan_fix(ALERT, {}, [])
         self.assertEqual(plan.action, "escalate")
 
     def test_missing_service_is_filled_with_the_alert_service(self):
         good = json_reply({"action": "restart_service"})
-        plan = IncidentAgent(ScriptedLLM([good])).plan_fix(ALERT, {}, [])
+        plan = IncidentAgent(ReplyListLLM([good])).plan_fix(ALERT, {}, [])
         self.assertEqual(plan.service, "checkout")
 
     def test_failed_fixes_are_shown_to_the_llm(self):
