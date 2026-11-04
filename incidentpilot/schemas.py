@@ -14,10 +14,10 @@ WRITE_TOOLS = ["rollback_deploy", "restart_service", "scale_service"]
 
 class Alert(BaseModel):
     """The alert that starts an incident."""
-    service: str
-    title: str
-    description: str = ""
-    severity: str = "high"
+    service: str      # e.g. payment-service
+    title: str        # e.g. payment-service has high error rate
+    description: str = ""   # e.g. payment-service has high error rate
+    severity: str = "high"   # e.g. high
 
 
 class Evidence(BaseModel):

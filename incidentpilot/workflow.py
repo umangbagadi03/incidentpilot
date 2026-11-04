@@ -233,7 +233,7 @@ class IncidentWorkflow:
 
     def collect_evidence(self, state, step, tool_name, arguments):
         """Run one read-only tool and store the result as evidence E1, E2, ..."""
-        evidence_id = "E" + str(len(state["evidence"]) + 1)
+        evidence_id = "E" + str(len(state["evidence"]) + 1)      
         arguments = dict(arguments)
         evidence = Evidence(id=evidence_id, step=step, tool=tool_name, arguments=arguments)
 
@@ -348,6 +348,7 @@ class IncidentWorkflow:
         timeline = state["timeline"]
 
         # Check the policy once more right before the change (a freeze may have started while we waited).
+        # human might have approved hours later, and freeze might have started in between
         policy = check_action(plan, state["alert"]["service"], self.settings)
         if policy["decision"] == "deny":
             error = "policy denied the change at execution time: " + policy["reason"]

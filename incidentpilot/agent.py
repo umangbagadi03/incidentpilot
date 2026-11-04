@@ -21,24 +21,28 @@ class LLMError(RuntimeError):
     pass
 
 
-def call_llm(llm, prompt):
+def call_llm(llm, prompt):     # 
     """Call the model. A provider error can quote part of the API key, and LangGraph saves the error of a
     failed step in its checkpoint, so the error is re-raised with every key removed."""
     try:
-        return llm.complete(prompts.SYSTEM, prompt)
+        return llm.complete(prompts.SYSTEM, prompt)   # llm call with system and user prompt
     except Exception as error:
-        raise LLMError(redact_secrets(str(error), [getattr(llm, "api_key", "")])) from None
+        raise LLMError(redact_secrets(str(error), [getattr(llm, "api_key", "")])) from None   # if llm object have api key remove it if not then ""
+        # redact check in error from api provider if that error contains api key if so the it removes that api key and add "[REDACTED]"
 
 
 def parse_json(text):
-    """Find the JSON object inside the LLM reply. Raises ValueError if there is none."""
+    """Find the JSON object inside the LLM reply. Raises ValueError if there is none.
+    text = 'Sure! Here is the JSON: {"action": "call_tool", "tool": "search_logs"} Hope this helps!'
+    # only we want json so we will find the first "{" and last "}" and return the JSON object in between them
+    """
     start = text.find("{")
-    if start == -1:
+    if start == -1:    # if "{" is not found in the text then raise ValueError
         raise ValueError("no JSON object found in the reply")
     try:
         decoder = json.JSONDecoder()
-        obj, index = decoder.raw_decode(text[start:])
-        if isinstance(obj, dict):
+        obj, index = decoder.raw_decode(text[start:])   # decode the text from the start index
+        if isinstance(obj, dict):    # if obj is dict then return obj
             return obj
     except ValueError:
         pass
@@ -64,7 +68,7 @@ def evidence_for_prompt(evidence_list, max_data_chars=1500):
             "arguments": evidence["arguments"],
             "ok": evidence["ok"],
             "summary": evidence["summary"],
-            "data": data_text,
+            "data": data_text,      # trimmed evidence data 
         }
         if len(evidence.get("flags", [])) > 0:
             item["flags"] = evidence["flags"]
@@ -97,22 +101,23 @@ def check_plan(plan):
 class IncidentAgent:
     def __init__(self, llm, llm_for=None):
         self.llm = llm               # the default model
-        self.llm_for = llm_for       # optional: incident id -> the model chosen for that incident
+        self.llm_for = llm_for       # optional: incident id -> the model chosen for that incident separate model for each incident
 
+    # if any special model is assigned for any specific incident
     def model_for(self, incident_id):
-        if self.llm_for is not None and incident_id != "":
+        if self.llm_for is not None and incident_id != "":   # if incident id is not empty and llm_for is not None
             return self.llm_for(incident_id)
         return self.llm
 
     def label_for(self, incident_id):
-        return describe_llm(self.model_for(incident_id))
+        return describe_llm(self.model_for(incident_id))    # returns human readable llm name
 
-    def ask(self, prompt, model_class, extra_check=None, incident_id=""):
+    def ask(self, prompt, model_class, extra_check=None, incident_id=""):   # this connects with llm to ask questions
         """Ask the LLM and parse the answer into a Pydantic model. One retry if the answer is invalid."""
-        llm = self.model_for(incident_id)
-        reply = call_llm(llm, prompt)
+        llm = self.model_for(incident_id)  # for this incident_id any special model is selected or not it returns the llm object
+        reply = call_llm(llm, prompt)      # call the llm to ask questions
         try:
-            return self.parse(reply, model_class, extra_check)
+            return self.parse(reply, model_class, extra_check)      # parse the answer into a Pydantic model
         except ValueError as error:      # JSON errors and Pydantic ValidationError are both ValueError
             retry_prompt = (
                 prompt + "\n\nYour previous reply was invalid (" + str(error) + "). "
@@ -121,6 +126,7 @@ class IncidentAgent:
             reply = call_llm(llm, retry_prompt)
             return self.parse(reply, model_class, extra_check)
 
+    # parse json text to Pydantic model
     def parse(self, reply, model_class, extra_check):
         model = model_class.model_validate(parse_json(reply))
         if extra_check is not None:
@@ -144,13 +150,13 @@ class IncidentAgent:
 
     def write_rca(self, alert, evidence_list, hypotheses=None, incident_id=""):
         prompt = prompts.fill(prompts.WRITE_RCA, {
-            "ALERT": json.dumps(alert),
-            "EVIDENCE": evidence_for_prompt(evidence_list),
-            "HYPOTHESES": hypotheses_for_prompt(hypotheses),
+            "ALERT": json.dumps(alert),    # alert
+            "EVIDENCE": evidence_for_prompt(evidence_list),  # evidence list
+            "HYPOTHESES": hypotheses_for_prompt(hypotheses),  # hypotheses
         })
-        try:
+        try:    # ask ao read alert, evidence and hypotheses from the llm and return the root cause
             rca = self.ask(prompt, RCA, None, incident_id)
-        except ValueError:
+        except ValueError:    # if llm fails to write the rca
             return RCA(
                 root_cause="RCA could not be written (invalid LLM output)",
                 inconclusive=True,
@@ -161,7 +167,8 @@ class IncidentAgent:
         # claim must appear in that evidence. Confidence is capped by the share of verified claims.
         checked = ground_rca(rca.model_dump(), evidence_list)
         return RCA.model_validate(checked)
-
+    
+    # we now have root cause here now it will ask the llm to suggest a fix based on the root cause.
     def plan_fix(self, alert, rca, evidence_list, incident_id=""):
         service = alert["service"]
 
@@ -183,7 +190,7 @@ class IncidentAgent:
             "SERVICE": service,
         })
         try:
-            plan = self.ask(prompt, Plan, check_plan, incident_id)
+            plan = self.ask(prompt, Plan, check_plan, incident_id)    # ask for a fix for the root cause.
         except ValueError:
             return Plan(action="escalate", service=service, reason="could not get a valid fix from the LLM")
         if plan.service == "":

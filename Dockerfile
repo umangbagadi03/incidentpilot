@@ -1,4 +1,4 @@
-# IncidentPilot image (used for the Hugging Face Space).
+# IncidentPilot image: the full version (hybrid RAG with both ML models) for any Docker host.
 # With an API key set as a secret (for example GEMINI_API_KEY) the server uses that model, with the scripted
 # model as a fallback. With no key it uses the scripted model. Visitors can also bring their own key in the UI.
 FROM python:3.12-slim
@@ -6,7 +6,7 @@ FROM python:3.12-slim
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     HOST=0.0.0.0 \
-    PORT=7860 \
+    PORT=8000 \
     HF_HOME=/app/.cache/huggingface
 
 WORKDIR /app
@@ -22,9 +22,9 @@ COPY . .
 RUN python -c "from sentence_transformers import SentenceTransformer, CrossEncoder; \
 SentenceTransformer('all-MiniLM-L6-v2'); CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')"
 
-# Hugging Face Spaces run the container as user 1000, which must be able to write data/ and reports/.
+# Run as a normal user (not root); it must be able to write data/ and reports/.
 RUN useradd -m -u 1000 user && chown -R user:user /app
 USER user
 
-EXPOSE 7860
+EXPOSE 8000
 CMD ["python", "main.py", "serve"]

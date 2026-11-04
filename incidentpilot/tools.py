@@ -25,7 +25,7 @@ class ToolError(Exception):
     """Raised when a tool call fails (unknown service, bad arguments, ...)."""
     pass
 
-
+# to read a json file from the given path
 def read_json(path):
     with open(path, "r", encoding="utf-8") as handle:
         return json.load(handle)
@@ -48,15 +48,19 @@ def sort_by_count(item):
 
 
 class ReplayState:
-    """Which incidents already had the right fix applied (simulation only).
+    """Tracks which incidents have already been fixed in the simulation.
 
-    Kept per INCIDENT, not per service. With a path it lives in SQLite and survives a restart;
-    without a path (some tests) it is a plain list in memory.
+    Why this exists:
+    - We don't have real AWS/Kubernetes servers, just recorded JSON files.
+    - We need to know whether to show broken files (status.json) or fixed files (status_after_fix.json).
+    - This class acts like a diary/mapping: incident_id -> fixed (True/False).
+    - Saved in SQLite so it survives restarts, or kept in memory (list) for unit tests.
     """
 
     def __init__(self, path=""):
         self.path = path
         self.memory = []
+        # If database path is given, create an SQLite table to persist fixed incidents across restarts
         if path != "":
             connection = sqlite3.connect(path)
             connection.execute("CREATE TABLE IF NOT EXISTS replay_fixed (incident_id TEXT PRIMARY KEY, fixed_at REAL)")
@@ -64,18 +68,24 @@ class ReplayState:
             connection.close()
 
     def is_fixed(self, incident_id):
+        """Check if an incident is already fixed. Returns True or False."""
+        # In RAM mode (tests): check if incident_id is in memory list
         if self.path == "":
             return incident_id in self.memory
+        # In SQLite mode: check if row exists in database table
         connection = sqlite3.connect(self.path)
         row = connection.execute("SELECT 1 FROM replay_fixed WHERE incident_id = ?", (incident_id,)).fetchone()
         connection.close()
         return row is not None
 
     def mark_fixed(self, incident_id):
+        """Mark an incident as FIXED when the AI applies the correct solution."""
+        # In RAM mode: append incident_id to the list
         if self.path == "":
             if incident_id not in self.memory:
                 self.memory.append(incident_id)
             return
+        # In SQLite mode: insert incident_id and current timestamp into database table
         connection = sqlite3.connect(self.path)
         connection.execute("INSERT OR IGNORE INTO replay_fixed (incident_id, fixed_at) VALUES (?, ?)",
                            (incident_id, time.time()))
@@ -83,10 +93,13 @@ class ReplayState:
         connection.close()
 
     def clear(self, incident_id):
+        """Reset an incident back to UNFIXED (useful when restarting a test scenario)."""
+        # In RAM mode: remove from list
         if self.path == "":
             if incident_id in self.memory:
                 self.memory.remove(incident_id)
             return
+        # In SQLite mode: delete the incident row from database table
         connection = sqlite3.connect(self.path)
         connection.execute("DELETE FROM replay_fixed WHERE incident_id = ?", (incident_id,))
         connection.commit()
@@ -113,17 +126,19 @@ class ScenarioTools:
             self.fixes[name] = self.read_fix(folder)
             self.service_to_scenario[service] = name
 
-    def read_fix(self, folder):
+    def read_fix(self, folder):   # it reads expected.json and returns the fix action , example: {"action": "rollback_deploy", "arguments": {"to_version": "2.13.4"}}
+        """Reads expected.json to find the correct fix action (ground truth answer key)."""
         expected_file = os.path.join(folder, "expected.json")
         if not os.path.isfile(expected_file):
             return None
         return read_json(expected_file).get("fix")
 
-    def list_scenarios(self):
+    def list_scenarios(self):   # list down all the scenario names use dropdown to select the scenario and call the describe_scenario tool with the scenario name
+        """Returns a list of all available scenario names."""
         return list(self.folders.keys())
 
-    def describe_scenario(self, scenario_name):
-        """Short info for the UI. The tagline says what the scenario tests (it is never shown to the LLM)."""
+    def describe_scenario(self, scenario_name):    # describe the scenario name that is selected from the dropdown
+        """Provides summary info for the UI dropdown/dashboard (never shown to the LLM)."""
         alert = self.load_alert(scenario_name)
         tagline = ""
         expected_file = os.path.join(self.folders[scenario_name], "expected.json")
@@ -137,17 +152,18 @@ class ScenarioTools:
             "tagline": tagline,
         }
 
-    def load_alert(self, scenario_name):
+    def load_alert(self, scenario_name):     # load alert.json for the chosen scenario to kick off the incident workflow
+        """Loads alert.json for the chosen scenario to kick off the incident workflow."""
         if scenario_name not in self.folders:
             raise ToolError("unknown scenario: " + scenario_name)
         return read_json(os.path.join(self.folders[scenario_name], "alert.json"))
 
-    def load_expected(self, scenario_name):
-        """Ground truth, used by evaluate.py."""
+    def load_expected(self, scenario_name):   # load expected.json for the chosen scenario to kick off the incident workflow
+        """Loads ground truth (expected.json) used by evaluate.py to grade LLM accuracy."""
         return read_json(os.path.join(self.folders[scenario_name], "expected.json"))
 
-    def reset(self, incident_id=""):
-        """Forget that this incident was fixed (simulation only, used by tests)."""
+    def reset(self, incident_id=""):   # reset the incident back to unfixed so tests/scenarios can be re-run cleanly
+        """Resets this incident back to unfixed so tests/scenarios can be re-run cleanly."""
         self.replay.clear(incident_id)
 
     # ---------- helpers ----------
@@ -303,7 +319,7 @@ def summarize(tool_name, data):
             + ", memory=" + str(current["memory_mb"]) + "MB"
             + " (SLO error_rate max " + str(data["slo"]["error_rate_max"]) + "%)"
         )
-
+    # safe fallback to json dump
     if tool_name == "get_metrics":
         parts = []
         for metric_name in data["metrics"]:
@@ -317,7 +333,7 @@ def summarize(tool_name, data):
             return "no " + data["level"] + " log lines found"
         parts = []
         for pattern in data["patterns"][:3]:
-            parts.append(str(pattern["count"]) + "x '''" + pattern["pattern"] + "'''")
+            parts.append(str(pattern["count"]) + 'x "' + pattern["pattern"] + '"')
         return str(data["total_lines"]) + " lines at " + data["level"] + "+. Top patterns: " + "; ".join(parts)
 
     if tool_name == "list_deploys":
