@@ -24,7 +24,7 @@ and re-opens the investigation if the fix did not work.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-dark.png">
-  <img alt="IncidentPilot: a change request waiting for approval, with the fact-checked root cause and the hypothesis board" src="docs/images/hero-light.png" width="100%">
+  <img alt="IncidentPilot: a change waiting for approval, with the root cause and each claim checked against its evidence" src="docs/images/hero-light.png" width="100%">
 </picture>
 
 <sub>The agent found that a recent release is a red herring and the database pool is the real cause. One claim cites the wrong evidence, so code marks it unbacked and caps the confidence from 0.85 to 0.75. The restart waits for a human.</sub>
@@ -107,7 +107,7 @@ sequenceDiagram
     G->>G: plan_fix → policy_check (allowed)
     G->>DB: request_approval saves the pending change
     G->>DB: wait_for_approval calls interrupt() → state saved, run stops
-    API->>H: UI shows the change request, the fact-checked RCA and the board
+    API->>H: UI shows the change request and the fact-checked RCA
     H->>API: Approve (or Reject)
     API->>G: Command(resume = approved, reviewer, comment)
     G->>DB: load checkpoint (works after a server restart)
@@ -204,7 +204,7 @@ instead of the two ML models. The [`Dockerfile`](Dockerfile) runs the full versi
 python main.py serve --demo          # open http://127.0.0.1:8000   ·   API docs at /docs
 ```
 
-In the UI, choose **Use my own API key** to run any drill on Claude, GPT or Gemini with your own key.
+In the UI, set **Model** to **My own API key** to run any scenario on Claude, GPT or Gemini with your own key.
 
 **2. Terminal:**
 

@@ -7,10 +7,25 @@
 
 var selectedId = null;
 var lastHtml = "";
-var openPanels = {};          // which "raw tool output" panels are open, by evidence id
-var activeTab = "evidence";   // evidence, hypotheses or log
+var openPanels = {};          // which <details> panels are open: raw tool output by evidence id, and the log
+var scenarios = [];           // loaded once, used by the sidebar and the start page
+
+// Line icons (lucide, 1.5 stroke). Each one is the inside of a 24x24 svg.
+var ICONS = {
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  play: '<path d="M7 4.5v15l12-7.5z"/>',
+  shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+  retry: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  chevron: '<path d="m9 18 6-6-6-6"/>'
+};
 
 // ---------- small helpers ----------
+
+function icon(name, extraClass) {
+  return '<svg class="icon' + (extraClass ? " " + extraClass : "") + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+         'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[name] + "</svg>";
+}
 
 function esc(value) {
   var div = document.createElement("div");
@@ -33,13 +48,13 @@ async function api(path, options) {
     if (!response.ok) {
       var problem = await response.json().catch(function () { return {}; });
       var detail = problem.detail;
-      if (typeof detail !== "string") { detail = "The server rejected the request (" + response.status + ")."; }
+      if (typeof detail !== "string") { detail = "The server rejected the request (" + response.status + ")"; }
       toast(detail);
       return null;
     }
     return await response.json();
   } catch (error) {
-    toast("Can't reach the server. If the demo was idle, it may be waking up: try again in a minute.");
+    toast("Can't reach the server. If the demo was idle it may be waking up, so try again in a minute.");
     return null;
   }
 }
@@ -56,12 +71,13 @@ function save(key, value) {
   try { localStorage.setItem(key, value); } catch (error) { /* private window: ignore */ }
 }
 
-function refButtons(ids) {
+// Evidence tags: E1, E2 ... Clicking one highlights that evidence.
+function tags(ids) {
   var html = "";
   for (var i = 0; i < ids.length; i++) {
-    html += '<button class="ref" data-ev="' + esc(ids[i]) + '" title="Show evidence ' + esc(ids[i]) + '">' + esc(ids[i]) + "</button>";
+    html += '<button class="tag" data-ev="' + esc(ids[i]) + '" title="Show evidence ' + esc(ids[i]) + '">' + esc(ids[i]) + "</button>";
   }
-  return html;
+  return '<span class="tags">' + html + "</span>";
 }
 
 function formatArguments(args) {
@@ -71,10 +87,26 @@ function formatArguments(args) {
   return parts.length > 0 ? parts.join(", ") : "none";
 }
 
-// One "item ........ value" checklist line.
-function item(name, value, kind) {
-  return '<li><span class="item">' + esc(name) + '</span><span class="leader"></span>' +
-         '<span class="value' + (kind ? " " + kind : "") + '">' + esc(value) + "</span></li>";
+// One "name    value" row.
+function row(name, value, kind) {
+  return '<li><span class="k">' + esc(name) + '</span><span class="v' + (kind ? " " + kind : "") + '">' + esc(value) + "</span></li>";
+}
+
+function capital(text) {
+  text = String(text);
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function words(name) {
+  return String(name).replace(/_/g, " ");       // rollback_deploy -> rollback deploy
+}
+
+// The proposed fix as a short sentence: "roll back checkout to 2.13.4".
+function describeFix(action, service, args) {
+  if (action === "rollback_deploy") { return "roll back " + service + " to " + args.to_version; }
+  if (action === "restart_service") { return "restart " + service; }
+  if (action === "scale_service") { return "scale " + service + " to " + args.replicas + " replicas"; }
+  return words(action) + " on " + service;
 }
 
 var STATUS_WORDS = {
@@ -85,16 +117,19 @@ var STATUS_WORDS = {
   error: "Stopped by an error"
 };
 
-function capital(text) {
-  text = String(text);
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
 function statusWord(status) {
   return STATUS_WORDS[status] || status;
 }
 
-// ---------- top bar, model choice, drills, recent incidents ----------
+function ago(seconds) {
+  var passed = Date.now() / 1000 - seconds;
+  if (passed < 60) { return "now"; }
+  if (passed < 3600) { return Math.floor(passed / 60) + "m"; }
+  if (passed < 86400) { return Math.floor(passed / 3600) + "h"; }
+  return Math.floor(passed / 86400) + "d";
+}
+
+// ---------- sidebar: model choice, scenarios, recent incidents ----------
 
 async function loadSystem() {
   var info = await api("/health");
@@ -102,8 +137,8 @@ async function loadSystem() {
   document.getElementById("server-model").textContent = "Built-in: " + info.llm;
   if (info.scripted) {
     var notice = document.getElementById("notice");
-    notice.innerHTML = "This live demo uses a scripted model and recorded incidents, so every run is free and repeatable. " +
-      "To run a real model, choose <b>My own API key</b> in the Model menu, or run the project from " +
+    notice.innerHTML = "The built-in model is scripted, so every run is free and repeatable. " +
+      "Choose My own API key to run a real model, or run it from " +
       '<a href="https://github.com/umangbagadi03/incidentpilot" target="_blank" rel="noopener">GitHub</a>.';
     notice.hidden = false;
   }
@@ -123,17 +158,18 @@ function ownModelChoice() {
 }
 
 async function loadScenarios() {
-  var scenarios = await api("/scenarios");
-  if (!scenarios) { return; }
+  var list = await api("/scenarios");
+  if (!list) { return; }
+  scenarios = list;
   var html = "";
   for (var i = 0; i < scenarios.length; i++) {
     var s = scenarios[i];
-    html += '<li><button class="drill" data-scenario="' + esc(s.name) + '">' +
-              '<span class="drill-title">' + esc(s.title) + "</span>" +
-              '<span class="drill-tests">' + esc(s.tagline) + "</span>" +
+    html += '<li><button class="nav-row" data-scenario="' + esc(s.name) + '" title="' + esc(s.title) + '">' +
+              '<span class="name">' + esc(s.service) + "</span>" + icon("play") +
             "</button></li>";
   }
   document.getElementById("scenarios").innerHTML = html;
+  if (!selectedId) { loadDetail(); }           // the start page lists the scenarios too
 }
 
 async function trigger(name, button) {
@@ -141,7 +177,7 @@ async function trigger(name, button) {
   if (usingOwnKey()) {
     var choice = ownModelChoice();
     if (choice.api_key.length < 10) {
-      toast("Paste your API key first, or switch the Model menu back to Built-in.");
+      toast("Paste your API key first, or switch the model back to Built-in");
       document.getElementById("api-key").focus();
       return;
     }
@@ -159,11 +195,13 @@ async function loadIncidents() {
   var html = "";
   var shown = Math.min(incidents.length, 8);          // the newest 8 are enough here
   for (var i = 0; i < shown; i++) {
-    var item = incidents[i];
-    var active = item.id === selectedId ? " active" : "";
-    html += '<li><button class="recent-item' + active + '" data-incident="' + esc(item.id) + '">' +
-              '<span class="recent-title">' + esc(item.title) + "</span>" +
-              '<span class="recent-status st-' + esc(item.status) + '">' + esc(statusWord(item.status)) + "</span>" +
+    var incident = incidents[i];
+    var active = incident.id === selectedId ? " active" : "";
+    html += '<li><button class="nav-row' + active + '" data-incident="' + esc(incident.id) + '" ' +
+              'title="' + esc(incident.title + ": " + statusWord(incident.status)) + '">' +
+              '<span class="dot ' + esc(incident.status) + '"></span>' +
+              '<span class="name">' + esc(incident.service) + "</span>" +
+              '<span class="meta">' + esc(ago(incident.created_at)) + "</span>" +
             "</button></li>";
   }
   document.getElementById("incidents").innerHTML = html;
@@ -173,10 +211,13 @@ function select(id) {
   selectedId = id;
   lastHtml = "";
   openPanels = {};
-  activeTab = "evidence";
   try { history.replaceState(null, "", "#" + id); } catch (error) { /* ignore */ }
   refresh();
-  window.scrollTo(0, 0);
+  if (window.matchMedia("(max-width: 820px)").matches) {
+    document.getElementById("detail").scrollIntoView();     // on a phone the sidebar sits above the incident
+  } else {
+    window.scrollTo(0, 0);
+  }
 }
 
 // ---------- the main area ----------
@@ -184,7 +225,7 @@ function select(id) {
 async function loadDetail() {
   var html;
   if (!selectedId) {
-    html = renderWelcome();
+    html = renderStart();
   } else {
     var incident = await api("/incidents/" + encodeURIComponent(selectedId));
     if (!incident) { selectedId = null; return; }
@@ -198,52 +239,73 @@ async function loadDetail() {
   if (reviewer && reviewer.value === "") { reviewer.value = readSaved("reviewer"); }
 }
 
-function renderWelcome() {
+function renderStart() {
+  var runs = "";
+  for (var i = 0; i < scenarios.length; i++) {
+    var s = scenarios[i];
+    runs += '<li class="run">' +
+              '<span class="run-service">' + esc(s.service) + "</span>" +
+              '<div><span class="run-title">' + esc(s.title) + '</span><span class="run-tests">' + esc(s.tagline) + "</span></div>" +
+              '<button class="btn" data-scenario="' + esc(s.name) + '">' + icon("play") + "Run</button>" +
+            "</li>";
+  }
+  var checks = [
+    ["Facts in the root cause", "Every number, version and name must appear in the evidence the claim cites"],
+    ["Instructions hidden in logs", "Removed before the model reads the tool output"],
+    ["Proposed change", "A policy check first, then your approval"],
+    ["Recovery", "Read from the service status and compared with the SLO"],
+    ["A fix that did not work", "Becomes new evidence, and the agent investigates again"]
+  ];
+  var checkList = "";
+  for (var c = 0; c < checks.length; c++) {
+    checkList += "<li><b>" + esc(checks[c][0]) + "</b><span>" + esc(checks[c][1]) + "</span></li>";
+  }
   return (
-    '<section class="welcome">' +
-      "<h1>Watch an AI agent work a production incident, and decide what it may change.</h1>" +
-      "<p>Pick a drill on the left. The agent reads logs, metrics and deploys one tool at a time, weighs competing " +
-      "explanations, and writes a root cause. Code then checks every number and name in that root cause against the " +
-      "evidence it cites. Nothing changes until a policy check passes and you approve.</p>" +
-      '<div class="card"><h2 class="card-title">What is checked by code, not by the model</h2><div class="card-body">' +
-        '<ul class="items">' +
-          item("Facts in the root cause", "must appear in the cited evidence") +
-          item("Instructions hidden in logs", "removed before the model reads them") +
-          item("Proposed changes", "policy check, then your approval") +
-          item("Recovery", "measured against the SLO") +
-          item("A failed fix", "becomes evidence, the agent tries again") +
-        "</ul>" +
-      "</div></div>" +
-    "</section>"
+    '<header class="head">' +
+      '<p class="meta-line">' + scenarios.length + " recorded incidents</p>" +
+      "<h1>Run a recorded incident</h1>" +
+      '<p class="lede">The agent reads logs, metrics and deploys one tool at a time and writes a root cause. ' +
+      "Code checks every claim in it against the evidence it cites, and nothing changes in production until a policy check passes and you approve.</p>" +
+    "</header>" +
+    '<div class="grid">' +
+      '<section class="panel"><div class="panel-head"><h2>Scenarios</h2><span class="meta">replayed from files</span></div>' +
+        '<ul class="runs">' + runs + "</ul></section>" +
+      '<section class="panel"><div class="panel-head"><h2>Checked by code, not by the model</h2></div>' +
+        '<ul class="checks">' + checkList + "</ul></section>" +
+    "</div>"
   );
 }
 
 function renderIncident(incident) {
   var state = incident.state || {};
   return renderHeader(incident, state) +
-         renderPhases(incident, state) +
-         renderCallout(incident, state) +
-         renderRootCause(state) +
-         renderDetails(state);
+         renderSteps(incident, state) +
+         renderStatus(incident, state) +
+         '<div class="grid">' +
+           '<div class="col">' + renderProof(state) + renderLog(state.timeline || []) + "</div>" +
+           '<div class="col">' + renderEvidence(state.evidence || []) + "</div>" +
+         "</div>";
 }
 
 function renderHeader(incident, state) {
   var alert = state.alert || {};
-  var facts = '<li class="status st-' + esc(incident.status) + '">' + esc(statusWord(incident.status)) + "</li>" +
-              "<li>Service: " + esc(incident.service) + "</li>" +
-              "<li>Severity: " + esc(incident.severity) + "</li>";
-  if (state.llm) { facts += "<li>Model: " + esc(state.llm) + "</li>"; }
+  var meta = '<span class="state"><span class="dot ' + esc(incident.status) + '"></span>' + esc(statusWord(incident.status)) + "</span>" +
+             "<span>" + esc(incident.service) + "</span>" +
+             "<span>" + esc(incident.severity) + "</span>";
+  if (state.llm) { meta += "<span>" + esc(state.llm) + "</span>"; }
   if (state.report) {
-    facts += '<li><a href="/incidents/' + esc(incident.id) + '/report" target="_blank" rel="noopener">Download report</a></li>';
+    meta += '<a href="/incidents/' + esc(incident.id) + '/report" target="_blank" rel="noopener">Report</a>';
   }
-  return '<ul class="facts">' + facts + "</ul>" +
-         '<h1 class="title">' + esc(incident.title) + "</h1>" +
-         '<p class="lede">' + esc(alert.description || incident.description) + "</p>";
+  return '<header class="head">' +
+           '<p class="meta-line">' + meta + "</p>" +
+           "<h1>" + esc(incident.title) + "</h1>" +
+           '<p class="lede">' + esc(alert.description || incident.description) + "</p>" +
+         "</header>";
 }
 
-// Five phases, each one done, now (agent working), wait (you), fail, or still to do.
-function phaseList(incident, state) {
-  var phases = [
+// Five steps, each one done, now (agent working), wait (you), fail, or still to do.
+function stepList(incident, state) {
+  var steps = [
     { name: "Investigate", kind: "", note: "" },
     { name: "Diagnose", kind: "", note: "" },
     { name: "Approve", kind: "", note: "" },
@@ -258,93 +320,95 @@ function phaseList(incident, state) {
   // A failed fix sends the agent back to investigate: show the new attempt from the start.
   var retrying = status === "running" && state.verification && !state.verification.healthy;
   if (retrying) {
-    phases[0].kind = "now";
-    phases[0].note = "attempt " + (state.attempts + 1);
-    return phases;
+    steps[0].kind = "now";
+    steps[0].note = "attempt " + (state.attempts + 1);
+    return steps;
   }
 
   if (state.rca) {
-    phases[0].kind = "done";
-    phases[0].note = tools + " tool calls";
+    steps[0].kind = "done";
+    steps[0].note = tools + " tool calls";
     var claims = state.rca.claims || [];
     var verified = 0;
     for (var c = 0; c < claims.length; c++) { if (claims[c].verified) { verified++; } }
     if (state.rca.inconclusive) {
-      phases[1].kind = "fail";
-      phases[1].note = "not enough evidence";
+      steps[1].kind = "fail";
+      steps[1].note = "not enough evidence";
     } else {
-      phases[1].kind = "done";
-      phases[1].note = verified + " of " + claims.length + " claims checked";
+      steps[1].kind = "done";
+      steps[1].note = verified + " of " + claims.length + " claims backed";
     }
   } else if (status === "running") {
-    phases[0].kind = "now";
-    phases[0].note = tools + " tool calls so far";
+    steps[0].kind = "now";
+    steps[0].note = tools + " tool calls so far";
   }
 
   if (state.plan && state.plan.action === "escalate") {
-    phases[2].kind = "fail";
-    phases[2].note = "no safe fix";
+    steps[2].kind = "fail";
+    steps[2].note = "no safe fix";
   } else if (state.policy && state.policy.decision === "deny") {
-    phases[2].kind = "fail";
-    phases[2].note = "blocked by policy";
+    steps[2].kind = "fail";
+    steps[2].note = "blocked by policy";
   } else if (state.approval) {
-    if (state.approval.status === "pending") { phases[2].kind = "wait"; phases[2].note = "waiting for you"; }
-    if (state.approval.status === "approved") { phases[2].kind = "done"; phases[2].note = "approved"; }
-    if (state.approval.status === "rejected") { phases[2].kind = "fail"; phases[2].note = "rejected"; }
+    if (state.approval.status === "pending") { steps[2].kind = "wait"; steps[2].note = "waiting for you"; }
+    if (state.approval.status === "approved") { steps[2].kind = "done"; steps[2].note = "approved"; }
+    if (state.approval.status === "rejected") { steps[2].kind = "fail"; steps[2].note = "rejected"; }
   }
 
   if (state.action_result) {
-    phases[3].kind = state.action_result.ok ? "done" : "fail";
-    phases[3].note = state.action_result.ok ? state.plan.action.replace(/_/g, " ") : "did not run";
+    steps[3].kind = state.action_result.ok ? "done" : "fail";
+    steps[3].note = state.action_result.ok ? words(state.plan.action) : "did not run";
   }
   if (state.verification) {
-    phases[4].kind = state.verification.healthy ? "done" : "fail";
-    phases[4].note = state.verification.healthy ? "healthy" : "still unhealthy";
+    steps[4].kind = state.verification.healthy ? "done" : "fail";
+    steps[4].note = state.verification.healthy ? "healthy" : "still unhealthy";
   }
   if (status === "error") {
-    for (var p = 0; p < phases.length; p++) {
-      if (phases[p].kind === "now" || (phases[p].kind === "" && (p === 0 || phases[p - 1].kind === "done"))) {
-        phases[p].kind = "fail";
-        phases[p].note = "stopped";
+    for (var p = 0; p < steps.length; p++) {
+      if (steps[p].kind === "now" || (steps[p].kind === "" && (p === 0 || steps[p - 1].kind === "done"))) {
+        steps[p].kind = "fail";
+        steps[p].note = "stopped";
         break;
       }
     }
   }
-  return phases;
+  return steps;
 }
 
-function renderPhases(incident, state) {
-  var phases = phaseList(incident, state);
-  var html = '<ol class="phases" aria-label="Progress">';
-  for (var i = 0; i < phases.length; i++) {
-    html += '<li class="phase ' + phases[i].kind + '"><b>' + esc(phases[i].name) + "</b><span>" + esc(phases[i].note) + "</span></li>";
+function renderSteps(incident, state) {
+  var steps = stepList(incident, state);
+  var html = '<ol class="steps" aria-label="Progress">';
+  for (var i = 0; i < steps.length; i++) {
+    var mark = "";
+    if (steps[i].kind === "done") { mark = icon("check"); }
+    if (steps[i].kind === "fail") { mark = icon("x"); }
+    html += '<li class="step ' + steps[i].kind + '"><b>' + mark + esc(steps[i].name) + "</b>" +
+            "<span>" + esc(steps[i].note || " ") + "</span></li>";
   }
   return html + "</ol>";
 }
 
 // The box that says what is happening right now, or what you need to do.
-function renderCallout(incident, state) {
+function renderStatus(incident, state) {
   var status = incident.status;
 
   if (status === "waiting_approval" && state.approval) {
     var a = state.approval;
     return (
-      '<section class="card amber"><h2 class="card-title">Your decision: the agent wants to change production' +
-        "<small>attempt " + esc(a.attempt) + "</small></h2>" +
-        '<div class="card-body">' +
-          '<ul class="items">' +
-            item("Action", a.action.replace(/_/g, " ")) +
-            item("Service", a.service) +
-            item("Arguments", formatArguments(a.arguments)) +
-            item("Policy check", "passed", "ok") +
-          "</ul>" +
-          '<p class="reason">' + esc(a.reason) + "</p>" +
-          '<div class="decide">' +
-            '<input id="reviewer" placeholder="Your name" autocomplete="name" aria-label="Your name">' +
-            '<input id="comment" placeholder="Comment (optional)" aria-label="Comment">' +
-            '<button class="btn go" data-decide="yes">Approve change</button>' +
-            '<button class="btn stop" data-decide="no">Reject</button>' +
-          "</div>" +
+      '<section class="panel status waiting">' +
+        '<div class="status-title"><span class="dot waiting_approval"></span>' +
+          "The agent wants to " + esc(describeFix(a.action, a.service, a.arguments)) + "</div>" +
+        "<p>" + esc(a.reason) + "</p>" +
+        '<ul class="rows">' +
+          row("Arguments", formatArguments(a.arguments)) +
+          row("Policy check", "passed", "ok") +
+          row("Attempt", a.attempt) +
+        "</ul>" +
+        '<div class="decide">' +
+          '<input id="reviewer" placeholder="Your name" autocomplete="name" aria-label="Your name">' +
+          '<input id="comment" placeholder="Comment (optional)" aria-label="Comment">' +
+          '<button class="btn primary" data-decide="yes">' + icon("check") + "Approve</button>" +
+          '<button class="btn" data-decide="no">Reject</button>' +
         "</div>" +
       "</section>"
     );
@@ -354,159 +418,141 @@ function renderCallout(incident, state) {
     var checks = (state.verification && state.verification.checks) || [];
     var lines = "";
     for (var i = 0; i < checks.length; i++) {
-      lines += item(capital(checks[i].name), checks[i].detail, checks[i].ok ? "ok" : "bad");
+      lines += row(capital(checks[i].name), checks[i].detail, checks[i].ok ? "ok" : "bad");
     }
-    return '<section class="card green"><h2 class="card-title">Resolved: recovery measured by code, not reported by the model</h2>' +
-           '<div class="card-body"><ul class="items">' + lines + "</ul></div></section>";
+    return '<section class="panel status">' +
+             '<div class="status-title"><span class="dot resolved"></span>Resolved</div>' +
+             "<p>Recovery was read from the service status by code, not reported by the model.</p>" +
+             '<ul class="rows">' + lines + "</ul></section>";
   }
 
   if (status === "escalated") {
-    return '<section class="card red"><h2 class="card-title">Handed to a human</h2><div class="card-body">' +
-           '<p class="reason">' + esc(state.escalation_reason) + ".</p>" +
-           '<p class="empty">Nothing was changed without approval.</p></div></section>';
+    return '<section class="panel status">' +
+             '<div class="status-title"><span class="dot escalated"></span>Handed to a human</div>' +
+             "<p>" + esc(capital(state.escalation_reason || "")) + ". Nothing was changed without approval.</p></section>";
   }
 
   if (status === "error") {
     var errors = (state.timeline || []).filter(function (event) { return event.stage === "error"; });
     var message = errors.length > 0 ? errors[errors.length - 1].message : "The workflow stopped.";
-    return '<section class="card red"><h2 class="card-title">Stopped by an error</h2><div class="card-body">' +
-           '<p class="reason">' + esc(message) + "</p>" +
-           '<p class="empty">The progress so far is saved. Retry continues from the last saved step.</p>' +
-           '<button class="btn" data-retry="1">Retry from the last step</button></div></section>';
+    return '<section class="panel status">' +
+             '<div class="status-title"><span class="dot error"></span>Stopped by an error</div>' +
+             "<p>" + esc(message) + "</p>" +
+             "<p>The progress so far is saved. Retry continues from the last saved step.</p>" +
+             '<div><button class="btn" data-retry="1">' + icon("retry") + "Retry</button></div></section>";
   }
 
-  // Running: show what the agent is testing right now.
+  // Running: show what the agent is doing right now.
   var timeline = state.timeline || [];
-  var latest = "Starting the investigation.";
+  var latest = "Starting the investigation";
   for (var t = timeline.length - 1; t >= 0; t--) {
     if (timeline[t].stage === "investigate" || timeline[t].stage === "rca" || timeline[t].stage === "plan") {
-      latest = timeline[t].message;
+      latest = capital(timeline[t].message);
       break;
     }
   }
-  return '<section class="card blue"><h2 class="card-title">The agent is working</h2><div class="card-body">' +
-         '<p class="reason">' + esc(latest) + "</p></div></section>";
+  return '<section class="panel status">' +
+           '<div class="status-title"><span class="dot running"></span>The agent is working</div>' +
+           "<p>" + esc(latest) + "</p></section>";
 }
 
-function renderRootCause(state) {
+// The root cause, and the proof for each claim in it. This is the part of the page that matters most.
+function renderProof(state) {
   var rca = state.rca;
-  if (!rca) { return ""; }
+  if (!rca) {
+    return '<section class="panel"><div class="panel-head"><h2>Root cause</h2></div>' +
+           '<p class="empty">Written when the agent stops investigating. Code then checks every claim in it against the evidence it cites.</p></section>';
+  }
   var claims = rca.claims || [];
   var verified = 0;
   var list = "";
+  var bar = "";
   for (var i = 0; i < claims.length; i++) {
     var claim = claims[i];
     if (claim.verified) { verified++; }
     var missing = "";
     if (!claim.verified && claim.missing_facts.length > 0) {
-      missing = '<span class="missing">Not found in the cited evidence: ' + esc(claim.missing_facts.join("; ")) + "</span>";
+      missing = '<span class="missing">Not in the cited evidence: ' + esc(claim.missing_facts.join(", ")) + "</span>";
     }
     list += '<li class="' + (claim.verified ? "ok" : "no") + '">' +
-              '<span class="tick" aria-label="' + (claim.verified ? "backed by evidence" : "not backed") + '">' +
-                (claim.verified ? "✓" : "✕") + "</span>" +
-              '<div><span class="claim-text">' + esc(claim.text) + "</span>" +
-              '<div class="claim-meta">Cites ' + refButtons(claim.evidence_ids) + " " + missing + "</div></div>" +
+              icon(claim.verified ? "check" : "x") +
+              "<div>" + esc(claim.text) + missing + "</div>" +
+              tags(claim.evidence_ids) +
             "</li>";
+    bar += '<i class="' + (claim.verified ? "ok" : "no") + '" title="Claim ' + (i + 1) + '"></i>';
   }
-  var final = Math.round(rca.confidence * 100);
-  var said = Math.round((rca.llm_confidence || 0) * 100);
-  var title = rca.inconclusive ? "Root cause: not proven" : "Root cause";
+
+  var confidence = rca.confidence.toFixed(2);
+  var said = (rca.llm_confidence || 0).toFixed(2);
+  var explain = "Code caps the confidence at the share of claims backed by evidence.";
+  if (confidence !== said) {
+    explain = "The model said " + said + ". Code lowered it to " + confidence + " because only " + verified + " of " +
+              claims.length + " claims are backed by evidence.";
+  }
   var missingEvidence = "";
   if (rca.inconclusive && rca.missing_evidence.length > 0) {
-    missingEvidence = '<p class="reason">Missing: ' + esc(rca.missing_evidence.join("; ")) + "</p>";
+    missingEvidence = '<p class="explain">Still missing: ' + esc(rca.missing_evidence.join(", ")) + "</p>";
   }
+
   return (
-    '<section class="card"><h2 class="card-title">' + title + "<small>" + esc(rca.category.replace(/_/g, " ")) + "</small></h2>" +
-      '<div class="card-body">' +
-        '<p class="root' + (rca.inconclusive ? " unsure" : "") + '">' + esc(rca.root_cause) + "</p>" +
-        missingEvidence +
-        '<div class="confidence">' +
-          '<span class="gauge" aria-hidden="true"><i style="width:' + final + '%"></i><u style="left:calc(' + said + '% - 1px)"></u></span>' +
-          "<span>Confidence " + rca.confidence.toFixed(2) + ". The model said " + (rca.llm_confidence || 0).toFixed(2) +
-          ", capped because " + verified + " of " + claims.length + " claims are backed by evidence.</span>" +
-        "</div>" +
-        '<ul class="claims">' + list + "</ul>" +
+    '<section class="panel">' +
+      '<div class="panel-head"><h2>' + (rca.inconclusive ? "Root cause not proven" : "Root cause") + "</h2>" +
+        '<span class="meta">' + esc(words(rca.category)) + "</span></div>" +
+      '<p class="root' + (rca.inconclusive ? " unsure" : "") + '">' + esc(rca.root_cause) + "</p>" +
+      '<div class="figures">' +
+        '<div><div class="figure-label">Confidence</div><div class="figure-num">' + confidence + "</div>" +
+          '<div class="figure-sub">model said ' + said + "</div></div>" +
+        '<div><div class="figure-label">Claims backed by evidence</div>' +
+          '<div class="figure-num">' + verified + "<small> of " + claims.length + "</small></div>" +
+          '<div class="figure-sub">checked by code</div></div>' +
       "</div>" +
+      (claims.length > 0 ? '<div class="proofbar" aria-hidden="true">' + bar + "</div>" : "") +
+      '<ul class="claims">' + list + "</ul>" +
+      '<p class="explain">' + esc(explain) + "</p>" +
+      missingEvidence +
     "</section>"
   );
 }
 
-function renderDetails(state) {
-  var evidence = state.evidence || [];
-  var board = state.hypotheses || [];
-  var timeline = state.timeline || [];
-  var tabs = [
-    { id: "evidence", name: "Evidence (" + evidence.length + ")" },
-    { id: "hypotheses", name: "Hypotheses (" + board.length + ")" },
-    { id: "log", name: "Log (" + timeline.length + ")" }
-  ];
-  var head = '<ul class="tabs" role="tablist">';
-  for (var i = 0; i < tabs.length; i++) {
-    head += '<li><button class="tab" role="tab" data-tab="' + tabs[i].id + '" aria-selected="' +
-            (tabs[i].id === activeTab) + '">' + esc(tabs[i].name) + "</button></li>";
-  }
-  head += "</ul>";
-  var body = "";
-  if (activeTab === "evidence") { body = renderEvidence(evidence); }
-  if (activeTab === "hypotheses") { body = renderBoard(board); }
-  if (activeTab === "log") { body = renderLog(timeline); }
-  return '<section aria-label="Details">' + head + '<div class="tab-panel" role="tabpanel">' + body + "</div></section>";
-}
-
-var SOURCES = { REPLAY: "recorded system data", RUNBOOK: "runbook", HISTORICAL: "past incident" };
+var SOURCES = { REPLAY: "recorded", RUNBOOK: "runbook", HISTORICAL: "past incident" };
 
 function renderEvidence(evidence) {
-  if (evidence.length === 0) { return '<p class="empty">The agent is choosing its first tool.</p>'; }
+  var head = '<div class="panel-head"><h2>Evidence</h2><span class="meta">' + evidence.length + " items</span></div>";
+  if (evidence.length === 0) {
+    return '<section class="panel">' + head + '<p class="empty">The agent is choosing its first tool.</p></section>';
+  }
   var html = "";
   for (var i = 0; i < evidence.length; i++) {
     var e = evidence[i];
     var source = e.tool === "verify_after_fix" ? "check after the fix" : (SOURCES[e.kind] || e.kind);
-    var flags = "";
-    if (!e.ok) { flags += '<span class="flag">Tool error</span>'; }
-    if (e.flags && e.flags.indexOf("prompt_injection") !== -1) { flags += '<span class="flag">Hidden instruction removed</span>'; }
+    var flag = e.ok ? "" : '<span class="flag">tool error</span>';
     var quarantine = "";
     if (e.quarantined && e.quarantined.length > 0) {
-      quarantine = '<div class="quarantine"><b>Removed before the model could read it</b>';
-      for (var q = 0; q < e.quarantined.length; q++) { quarantine += "<div>" + esc(e.quarantined[q]) + "</div>"; }
+      quarantine = '<div class="quarantine"><b>' + icon("shield") + "Removed before the model could read it</b>";
+      for (var q = 0; q < e.quarantined.length; q++) { quarantine += "<code>" + esc(e.quarantined[q]) + "</code>"; }
       quarantine += "</div>";
     }
-    html += '<article class="evidence" id="ev-' + esc(e.id) + '">' +
-              '<div class="ev-head"><span class="ev-id">' + esc(e.id) + '</span><span class="ev-tool">' + esc(e.tool) + "</span>" +
-              '<span class="ev-source">' + esc(source) + "</span>" + flags + "</div>" +
-              '<p class="ev-summary">' + esc(e.summary) + "</p>" + quarantine +
-              '<details class="raw" data-panel="' + esc(e.id) + '"><summary>Raw tool output</summary><pre>' +
-              esc(JSON.stringify(e.data, null, 2)) + "</pre></details>" +
-            "</article>";
+    html += '<li class="ev" id="ev-' + esc(e.id) + '">' +
+              '<div class="ev-head"><span class="tag">' + esc(e.id) + '</span><span class="ev-tool">' + esc(e.tool) + "</span>" +
+              flag + '<span class="ev-src">' + esc(source) + "</span></div>" +
+              '<p class="ev-sum">' + esc(e.summary) + "</p>" + quarantine +
+              '<details class="raw" data-panel="' + esc(e.id) + '"><summary>' + icon("chevron", "chev") + "Raw output</summary>" +
+              "<pre>" + esc(JSON.stringify(e.data, null, 2)) + "</pre></details>" +
+            "</li>";
   }
-  return html;
-}
-
-var VERDICTS = { supported: "Supported", refuted: "Ruled out", open: "Still open" };
-
-function renderBoard(board) {
-  if (board.length === 0) { return '<p class="empty">Competing explanations appear here while the agent investigates.</p>'; }
-  var html = '<p class="empty">The agent keeps several explanations at once and picks the tool that tells them apart. ' +
-             "A verdict without evidence is reset to open by code.</p>";
-  for (var i = 0; i < board.length; i++) {
-    var h = board[i];
-    html += '<div class="hypo ' + esc(h.status) + '"><span class="hypo-id">' + esc(h.id) + "</span>" +
-              '<div><span class="hypo-text">' + esc(h.statement) + "</span>" +
-              '<div class="hypo-refs">' + refButtons(h.evidence_ids) + "</div></div>" +
-              '<span class="hypo-verdict">' + esc(VERDICTS[h.status] || h.status) + "</span>" +
-            "</div>";
-  }
-  return html;
+  return '<section class="panel">' + head + '<ul class="evidence">' + html + "</ul></section>";
 }
 
 function renderLog(timeline) {
-  if (timeline.length === 0) { return '<p class="empty">Starting.</p>'; }
-  var html = '<ol class="log" reversed>';
+  var items = "";
   for (var i = timeline.length - 1; i >= 0; i--) {       // newest first
     var event = timeline[i];
-    html += '<li><span class="when">' + esc(event.time) + '</span><span class="what">' + esc(event.stage) + "</span>" +
-            '<span class="msg">' + esc(event.message) + "</span></li>";
+    items += '<li><span class="when">' + esc(event.time) + '</span><span class="what">' + esc(event.stage) + "</span>" +
+             '<span class="msg">' + esc(event.message) + "</span></li>";
   }
-  return html + "</ol>";
+  return '<details class="panel log-panel" data-panel="log"><summary><h2>Agent log</h2>' +
+           '<span class="meta">' + timeline.length + " events</span>" + icon("chevron", "chev") + "</summary>" +
+           '<ol class="log">' + items + "</ol></details>";
 }
 
 // ---------- actions ----------
@@ -528,22 +574,11 @@ async function retry() {
 }
 
 function showEvidence(id) {
-  // Citations live in the Evidence tab: switch to it, then highlight the cited item.
-  if (activeTab !== "evidence") {
-    activeTab = "evidence";
-    lastHtml = "";
-    loadDetail().then(function () { highlight(id); });
-    return;
-  }
-  highlight(id);
-}
-
-function highlight(id) {
-  var card = document.getElementById("ev-" + id);
-  if (!card) { return; }
-  card.classList.add("lit");
-  card.scrollIntoView({ behavior: "smooth", block: "center" });
-  setTimeout(function () { card.classList.remove("lit"); }, 1600);
+  var item = document.getElementById("ev-" + id);
+  if (!item) { return; }
+  item.classList.add("lit");
+  item.scrollIntoView({ behavior: "smooth", block: "center" });
+  setTimeout(function () { item.classList.remove("lit"); }, 1600);
 }
 
 function restorePanels() {
@@ -555,14 +590,13 @@ function restorePanels() {
 
 // One click handler for the whole page (the HTML is rebuilt often, so we do not attach handlers to elements).
 document.addEventListener("click", function (event) {
-  var target = event.target.closest("button, summary");
+  var target = event.target.closest("button");
   if (!target) { return; }
   if (target.dataset.scenario) { trigger(target.dataset.scenario, target); }
   else if (target.dataset.incident) { select(target.dataset.incident); }
   else if (target.dataset.decide) { decide(target.dataset.decide === "yes", target); }
   else if (target.dataset.retry) { retry(); }
   else if (target.dataset.ev) { showEvidence(target.dataset.ev); }
-  else if (target.dataset.tab) { activeTab = target.dataset.tab; lastHtml = ""; loadDetail(); }
 });
 
 document.addEventListener("change", function (event) {

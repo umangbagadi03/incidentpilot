@@ -7,49 +7,48 @@
 <meta name="description" content="An LLM agent that investigates production incidents, checks its own root cause against evidence, and waits for human approval.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/ui/style.css?v=4">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ui/style.css?v=5">
 </head>
 <body>
 
-<header class="bar">
-  <a class="mark" href="/" aria-label="IncidentPilot home">IncidentPilot</a>
-  <p class="bar-line">An LLM agent that investigates incidents, checks its own evidence, and waits for your approval.</p>
-  <div class="model-pick">
-    <label for="model-select">Model</label>
-    <select id="model-select">
-      <option value="server" id="server-model">Built-in model</option>
-      <option value="own">My own API key</option>
-    </select>
-  </div>
-</header>
+<div class="app">
+  <aside class="side" aria-label="Scenarios and incidents">
+    <a class="brand" href="/">IncidentPilot</a>
 
-<div id="notice" class="notice" hidden></div>
+    <nav class="side-group scenarios">
+      <h2>Run a scenario</h2>
+      <ul id="scenarios" class="nav"></ul>
+    </nav>
 
-<section id="own-key" class="own-key" hidden aria-label="Your API key">
-  <select id="provider" aria-label="Provider">
-    <option value="anthropic">Claude (Anthropic)</option>
-    <option value="openai">GPT (OpenAI)</option>
-    <option value="gemini">Gemini (Google)</option>
-  </select>
-  <input id="api-key" type="password" placeholder="Paste your API key" autocomplete="off" spellcheck="false">
-  <input id="model-name" placeholder="Model name (optional)" autocomplete="off" spellcheck="false">
-  <p>Your key is used only for the drills you start now. It stays in server memory for that run and is never saved or shown.
-    Use a key with a spending limit.</p>
-</section>
+    <nav class="side-group recent">
+      <h2>Recent</h2>
+      <ul id="incidents" class="nav"><li class="quiet">None yet</li></ul>
+    </nav>
 
-<div class="layout">
-  <nav class="rail" aria-label="Drills and incidents">
-    <h2>Drills</h2>
-    <p class="rail-help">Each drill replays a recorded incident. Click one to start it.</p>
-    <ul id="scenarios" class="drills"></ul>
-    <h2>Recent incidents</h2>
-    <ul id="incidents" class="recent"><li class="quiet">None yet.</li></ul>
-  </nav>
+    <section class="side-group model">
+      <label for="model-select">Model</label>
+      <select id="model-select">
+        <option value="server" id="server-model">Built-in model</option>
+        <option value="own">My own API key</option>
+      </select>
+      <div id="own-key" class="own-key" hidden>
+        <select id="provider" aria-label="Provider">
+          <option value="anthropic">Claude (Anthropic)</option>
+          <option value="openai">GPT (OpenAI)</option>
+          <option value="gemini">Gemini (Google)</option>
+        </select>
+        <input id="api-key" type="password" placeholder="API key" autocomplete="off" spellcheck="false" aria-label="API key">
+        <input id="model-name" placeholder="Model name (optional)" autocomplete="off" spellcheck="false" aria-label="Model name">
+        <p class="note">Used only for the runs you start now. It stays in server memory for that run and is never saved or shown. Use a key with a spending limit.</p>
+      </div>
+      <p id="notice" class="note" hidden></p>
+    </section>
+  </aside>
 
-  <main id="detail" class="detail"></main>
+  <main id="detail" class="main"></main>
 </div>
 
-<script src="/ui/app.js?v=4"></script>
+<script src="/ui/app.js?v=5"></script>
 </body>
 </html>
