@@ -19,13 +19,6 @@ from incidentpilot.service import ServiceError
 STATUS_CODES = {"bad_request": 400, "not_found": 404, "conflict": 409}
 
 
-class AlertRequest(BaseModel):
-    service: str
-    title: str
-    description: str = ""
-    severity: str = "high"
-
-
 class ModelChoice(BaseModel):
     """Bring your own key: run ONE incident on this model. The key stays in memory only."""
     provider: Literal["anthropic", "openai", "gemini"]
@@ -88,16 +81,6 @@ def create_app(service):
         llm = build_model(choice)
         try:
             incident = service.trigger_scenario(name, llm)
-        except ServiceError as error:
-            raise http_error(error)
-        background.add_task(service.run, incident["id"], service.initial_input(incident))
-        return incident
-
-    @app.post("/incidents")
-    def create_incident(alert: AlertRequest, background: BackgroundTasks):
-        """Start an incident from an alert (the service must be one the recorded tools know)."""
-        try:
-            incident = service.start_incident(alert.model_dump())
         except ServiceError as error:
             raise http_error(error)
         background.add_task(service.run, incident["id"], service.initial_input(incident))

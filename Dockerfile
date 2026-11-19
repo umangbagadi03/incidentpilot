@@ -1,6 +1,6 @@
 # IncidentPilot image: the full version (hybrid RAG with both ML models) for any Docker host.
-# With an API key set as a secret (for example GEMINI_API_KEY) the server uses that model, with the scripted
-# model as a fallback. With no key it uses the scripted model. Visitors can also bring their own key in the UI.
+# With an API key set as a secret (for example GEMINI_API_KEY) the server uses that model.
+# With no key it uses the scripted model. Visitors can also bring their own key in the UI.
 FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 \

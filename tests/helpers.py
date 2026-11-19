@@ -19,14 +19,13 @@ def make_settings():
     settings.change_freeze = False
     settings.allowed_services = ["checkout", "payments", "inventory", "search", "orders", "notifications"]
     settings.max_replicas = 10
-    settings.learn_from_incidents = False
     settings.use_dense = False
     return settings
 
 
 def make_retriever(settings):
     """BM25 only. No model download, so the tests are fast and work offline."""
-    return HybridRetriever(load_documents(settings.knowledge_dir, settings.learned_dir))
+    return HybridRetriever(load_documents(settings.knowledge_dir))
 
 
 def make_service(llm=None, settings=None, retriever=None):

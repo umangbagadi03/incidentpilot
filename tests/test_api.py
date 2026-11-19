@@ -63,14 +63,6 @@ class TestApi(unittest.TestCase):
         self.assertEqual(self.client.post("/scenarios/nope/trigger").status_code, 404)
         self.assertEqual(self.client.post("/incidents/inc-nope/approval", json={"approved": True}).status_code, 404)
 
-    def test_bad_alert_body_is_rejected(self):
-        self.assertEqual(self.client.post("/incidents", json={"service": "checkout"}).status_code, 422)
-
-    def test_alert_from_a_webhook_starts_an_incident(self):
-        body = {"service": "checkout", "title": "HTTP 500 on checkout", "severity": "critical"}
-        incident = self.client.post("/incidents", json=body).json()
-        self.assertEqual(self.client.get("/incidents/" + incident["id"]).json()["status"], "waiting_approval")
-
     def test_metrics_endpoint(self):
         self.client.post("/scenarios/insufficient_evidence_search/trigger")
         self.assertIn("ip_incidents_finished_total", self.client.get("/metrics").text)

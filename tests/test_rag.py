@@ -1,8 +1,7 @@
 import unittest
 
 from incidentpilot.config import Settings
-from incidentpilot.rag import (HybridRetriever, build_retriever, incident_to_document, load_documents,
-                               reciprocal_rank_fusion, save_postmortem, tokenize)
+from incidentpilot.rag import HybridRetriever, build_retriever, load_documents, reciprocal_rank_fusion, tokenize
 from tests.helpers import FakeEmbedder, FakeReranker, make_settings
 
 
@@ -58,12 +57,6 @@ class TestBm25Only(unittest.TestCase):
     def test_empty_knowledge_base_does_not_crash(self):
         self.assertEqual(HybridRetriever([]).search("anything"), [])
 
-    def test_added_document_can_be_found(self):
-        document = {"id": "x1", "type": "past_incident", "title": "X1: zebra outage", "text": "zebra cache failed"}
-        self.retriever.add_document(document)
-        self.assertEqual(self.retriever.search("zebra")[0]["id"], "x1")
-
-
 class TestHybrid(unittest.TestCase):
     """Uses the real Qdrant client (in memory) with fake embeddings, so no model download is needed."""
 
@@ -89,12 +82,6 @@ class TestHybrid(unittest.TestCase):
         results = retriever.search("memory leak OOM restart heap")
         self.assertIn(results[0]["id"], ["memory-leak", "INC-103"])
 
-    def test_added_document_is_searchable_in_both_indexes(self):
-        document = {"id": "x2", "type": "past_incident", "title": "X2: kraken outage", "text": "kraken queue stuck"}
-        self.retriever.add_document(document)
-        self.assertEqual(self.retriever.search("kraken queue")[0]["id"], "x2")
-
-
 class TestStaleQdrantPoints(unittest.TestCase):
     """A remote Qdrant keeps points between runs. Old points must never break a search."""
 
@@ -118,18 +105,7 @@ class TestStaleQdrantPoints(unittest.TestCase):
         self.assertEqual(count, len(retriever.documents))
 
 
-class TestLearning(unittest.TestCase):
-    def test_postmortem_round_trip(self):
-        settings = make_settings()
-        incident = {
-            "id": "learned-abc", "title": "Cart outage", "service": "cart", "category": "bad_deploy",
-            "symptoms": "carts failed", "root_cause": "bad config", "resolution": "rollback",
-        }
-        save_postmortem(settings.learned_dir, incident)
-        documents = load_documents(settings.knowledge_dir, settings.learned_dir)
-        self.assertIn("learned-abc", ids_of(documents))
-        self.assertEqual(incident_to_document(incident)["type"], "past_incident")
-
+class TestBuildRetriever(unittest.TestCase):
     def test_build_retriever_without_dense_is_bm25_only(self):
         settings = make_settings()
         settings.use_dense = False

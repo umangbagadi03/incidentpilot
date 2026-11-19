@@ -1,14 +1,13 @@
 """The incident workflow, as a LangGraph graph.
 
     investigate (loop) -> analyze -> plan_fix -> policy_check -> request_approval -> wait_for_approval
-        -> execute -> verify -> remember -> resolve        (any problem on the way -> escalate)
+        -> execute -> verify -> resolve        (any problem on the way -> escalate)
         verify fails and attempts are left -> back to investigate
 
 Each node is a small method: it reads the state (a dict) and returns ONLY the keys it changes.
 Each router method (after_...) looks at the state and returns the name of the next node.
 Read build() first: it is the map of the whole project.
 """
-import json
 import time
 from typing import TypedDict
 
@@ -19,7 +18,6 @@ from incidentpilot.grounding import clean_hypotheses
 from incidentpilot.guardrails import clean_tool_output
 from incidentpilot.metrics import APPROVALS, GUARDRAIL_HITS, POLICY_DECISIONS, TOOL_CALLS
 from incidentpilot.policy import check_action
-from incidentpilot.rag import incident_to_document, save_postmortem
 from incidentpilot.report import build_report
 from incidentpilot.schemas import READ_TOOLS, Evidence
 from incidentpilot.tools import ToolError, summarize
@@ -119,7 +117,6 @@ class IncidentWorkflow:
         graph.add_node("wait_for_approval", self.wait_for_approval)
         graph.add_node("execute", self.execute)
         graph.add_node("verify", self.verify)
-        graph.add_node("remember", self.remember)
         graph.add_node("resolve", self.resolve)
         graph.add_node("escalate", self.escalate)
 
@@ -138,8 +135,7 @@ class IncidentWorkflow:
         graph.add_conditional_edges("execute", self.after_execute,
                                     {"verify": "verify", "escalate": "escalate"})
         graph.add_conditional_edges("verify", self.after_verify,
-                                    {"remember": "remember", "investigate": "investigate", "escalate": "escalate"})
-        graph.add_edge("remember", "resolve")
+                                    {"resolve": "resolve", "investigate": "investigate", "escalate": "escalate"})
         graph.add_edge("resolve", END)
         graph.add_edge("escalate", END)
 
@@ -179,7 +175,7 @@ class IncidentWorkflow:
 
     def after_verify(self, state):
         if state["verification"]["healthy"]:
-            return "remember"
+            return "resolve"
         if state["attempts"] < self.settings.max_fix_attempts:
             return "investigate"      # the fix did not work: look again, with the new evidence
         return "escalate"
@@ -400,37 +396,6 @@ class IncidentWorkflow:
             "done_investigating": False,
             "timeline": timeline,
         }
-
-    def remember(self, state):
-        """Learn from this incident: save a short postmortem and index it, so the next search can find it.
-
-        Only incidents that were approved by a human AND verified healthy get here.
-        """
-        timeline = state["timeline"]
-        if not self.settings.learn_from_incidents:
-            return {"timeline": timeline}
-
-        alert = state["alert"]
-        plan = state["plan"]
-        description = alert.get("description", "")
-        if description == "":
-            description = alert["title"]
-        incident = {
-            "id": "learned-" + state["incident_id"],
-            "title": alert["title"],
-            "service": alert["service"],
-            "category": state["rca"]["category"],
-            "symptoms": description,
-            "root_cause": state["rca"]["root_cause"],
-            "resolution": plan["action"] + " " + json.dumps(plan["arguments"]) + " (approved by a human, verified healthy)",
-        }
-        try:
-            save_postmortem(self.settings.learned_dir, incident)
-            self.retriever.add_document(incident_to_document(incident))
-            timeline = self.add_event(timeline, "remember", "saved postmortem " + incident["id"])
-        except Exception as error:
-            timeline = self.add_event(timeline, "remember", "could not save the postmortem: " + str(error))
-        return {"timeline": timeline}
 
     def resolve(self, state):
         timeline = self.add_event(state["timeline"], "resolved", "service is healthy again")

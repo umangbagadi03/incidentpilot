@@ -1,12 +1,10 @@
 """Tests of the LangGraph workflow, driven through the service (the same way the CLI and the API drive it)."""
-import json
-import os
 import unittest
 
 from evaluate import evaluate_one_run
 from incidentpilot.scripted_llm import ScriptedLLM
 from incidentpilot.rag import build_retriever, load_documents
-from incidentpilot.service import ServiceError, build_service, run_to_end
+from incidentpilot.service import ServiceError, run_to_end
 from tests.helpers import approve_no, approve_yes, json_reply, make_service, make_settings
 
 
@@ -327,36 +325,6 @@ class TestCrashRecovery(unittest.TestCase):
         incident = service.trigger_scenario("bad_deploy_checkout")     # status "running", never started
         self.assertEqual(service.mark_interrupted(), 1)
         self.assertEqual(service.get(incident["id"])["status"], "error")
-
-
-class TestLearning(unittest.TestCase):
-    def test_resolved_incident_becomes_searchable_knowledge(self):
-        settings = make_settings()
-        settings.learn_from_incidents = True
-        service = make_service(settings=settings)
-        final = run_scenario(service, "bad_deploy_checkout")
-
-        path = os.path.join(settings.learned_dir, "learned-" + final["id"] + ".json")
-        self.assertTrue(os.path.isfile(path))
-        with open(path) as handle:
-            self.assertIn("rollback_deploy", json.load(handle)["resolution"])
-        found = []
-        for result in service.retriever.search("KeyError discount_code checkout release", top_k=6):
-            found.append(result["id"])
-        self.assertIn("learned-" + final["id"], found)
-
-    def test_escalated_incident_is_not_learned(self):
-        settings = make_settings()
-        settings.learn_from_incidents = True
-        service = make_service(settings=settings)
-        run_scenario(service, "insufficient_evidence_search")
-        self.assertEqual(os.listdir(settings.learned_dir), [])
-
-    def test_learning_can_be_switched_off(self):
-        settings = make_settings()
-        service = make_service(settings=settings)
-        run_scenario(service, "bad_deploy_checkout")
-        self.assertEqual(os.listdir(settings.learned_dir), [])
 
 
 class TestStartingIncidents(unittest.TestCase):

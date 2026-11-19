@@ -1,4 +1,4 @@
-"""Model choice: the server model with fallback, "bring your own key", and keeping keys secret."""
+"""Model choice: "bring your own key", and keeping keys secret."""
 import os
 import unittest
 
@@ -7,19 +7,11 @@ from fastapi.testclient import TestClient
 import incidentpilot.api as api_module
 from incidentpilot.api import create_app
 from incidentpilot.scripted_llm import ScriptedLLM
-from incidentpilot.llm import FallbackLLM, make_llm, redact_secrets
+from incidentpilot.llm import make_llm, redact_secrets
 from incidentpilot.service import run_to_end
 from tests.helpers import approve_yes, make_service, make_settings
 
 FAKE_KEY = "sk-test-SECRET-1234567890abcdef"
-
-
-class BrokenLLM:
-    """A real model whose quota is used up: every call fails."""
-    label = "Broken · model"
-
-    def complete(self, system, user):
-        raise RuntimeError("429 quota exceeded")
 
 
 class OwnKeyLLM(ScriptedLLM):
@@ -38,38 +30,6 @@ class OwnKeyLLM(ScriptedLLM):
         if self.fail_on_rca and "TASK: write_rca" in user:
             raise RuntimeError("Incorrect API key provided: " + FAKE_KEY)
         return ScriptedLLM.complete(self, system, user)
-
-
-class TestFallback(unittest.TestCase):
-    def test_first_call_failure_switches_the_incident_to_the_scripted_model(self):
-        llm = FallbackLLM(BrokenLLM(), ScriptedLLM()).fresh()
-        service = make_service(llm)
-        final = run_to_end(service, service.trigger_scenario("bad_deploy_checkout")["id"], approve_yes)
-        self.assertEqual(final["status"], "resolved")
-        self.assertIn("live model unavailable", final["state"]["llm"])
-
-    def test_a_failure_in_the_middle_is_raised(self):
-        class FailsLater:
-            label = "Later"
-            calls = 0
-
-            def complete(self, system, user):
-                FailsLater.calls = FailsLater.calls + 1
-                if FailsLater.calls > 1:
-                    raise RuntimeError("network down")
-                return '{"action": "finish"}'
-
-        llm = FallbackLLM(FailsLater(), ScriptedLLM())
-        llm.complete("s", "u")
-        with self.assertRaises(RuntimeError):
-            llm.complete("s", "u")
-
-    def test_each_incident_gets_its_own_fallback_switch(self):
-        server = FallbackLLM(BrokenLLM(), ScriptedLLM())
-        service = make_service(server)
-        first = service.trigger_scenario("bad_deploy_checkout")
-        second = service.trigger_scenario("memory_leak_payments")
-        self.assertIsNot(service.llm_for(first["id"]), service.llm_for(second["id"]))
 
 
 class TestOwnKey(unittest.TestCase):

@@ -39,7 +39,7 @@ class IncidentService:
         self.tools = tools
         self.retriever = retriever
         self.llm = llm                       # the server's default model
-        # incident id -> the model for that incident ("bring your own key", or a per-incident fallback).
+        # incident id -> the model for that incident ("bring your own key").
         # Kept ONLY in memory: an API key is never written to SQLite, the state, the logs or the report.
         self.incident_llms = {}
         self.callbacks = get_callbacks(settings)
@@ -91,8 +91,6 @@ class IncidentService:
         incident = self.store.create(alert, scenario)
         if llm is not None:
             self.incident_llms[incident["id"]] = llm
-        elif hasattr(self.llm, "fresh"):
-            self.incident_llms[incident["id"]] = self.llm.fresh()     # the fallback switch is per incident
         return incident
 
     def initial_input(self, incident):
@@ -207,7 +205,7 @@ def build_service(settings, llm, retriever=None, verbose=False):
     # The replay "is it fixed?" flags live in the same SQLite file as the incidents, per incident id.
     tools = ScenarioTools(settings.scenarios_dir, state_path=settings.db_path)
     if retriever is None:
-        documents = load_documents(settings.knowledge_dir, settings.learned_dir)
+        documents = load_documents(settings.knowledge_dir)
         retriever = build_retriever(settings, documents)
     agent = IncidentAgent(llm)          # llm_for is connected below, once the service exists
     workflow = IncidentWorkflow(tools, retriever, agent, settings, verbose=verbose)

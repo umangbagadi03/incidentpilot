@@ -45,7 +45,7 @@ Most agent demos trust whatever the model writes. IncidentPilot treats the LLM a
 | 🛡️ | **Prompt-injection guardrail** | Logs contain text written by outsiders. Instruction-like text in a tool result is quarantined before the model sees it and shown to the reviewer instead. |
 | ✋ | **Human-in-the-loop** | Every change passes a plain-Python policy (allow-list, change freeze, blast radius, replica limits) and pauses the LangGraph run with `interrupt()` until a human approves, even across a server restart. |
 | ♻️ | **Verify and self-correct** | Recovery is checked by code against the SLO, never by asking the model. A failed fix becomes new evidence, refutes a hypothesis, and the agent tries again before escalating. |
-| 🔑 | **Bring your own model** | Visitors use the server's model (a real LLM with a scripted fallback, or the scripted model if no key is configured). Anyone can instead paste their own Claude, GPT or Gemini key for one run: it stays in server memory only, is never saved or shown, and is removed from every error message. |
+| 🔑 | **Bring your own model** | Visitors use the server's model (a real LLM if a key is configured, otherwise the scripted model). Anyone can instead paste their own Claude, GPT or Gemini key for one run: it stays in server memory only, is never saved or shown, and is removed from every error message. |
 | 📊 | **Evaluation harness** | Six adversarial scenarios (red-herring deploy, failed first fix, injection, no-answer case) scored on outcome, exact fix, unsafe actions, rejection safety and grounding. |
 
 ---
@@ -65,7 +65,7 @@ flowchart TD
     RQ --> W[[wait_for_approval<br/><sub>interrupt · graph pauses</sub>]]
     W -- approved --> X[execute<br/><sub>policy checked again</sub>]
     X --> V{verify<br/><sub>status vs SLO</sub>}
-    V -- healthy --> M[remember<br/><sub>index postmortem</sub>] --> OK([resolved])
+    V -- healthy --> OK([resolved])
     V -- still broken, attempts left --> I
 
     R -. inconclusive .-> E([escalate to a human])
@@ -78,11 +78,11 @@ flowchart TD
     classDef code fill:#e3eef8,stroke:#1d5b94,color:#1b1a17
     classDef human fill:#e2f1e5,stroke:#2b7a3d,color:#1b1a17
     class I,R,P llm
-    class PC,RQ,X,V,M code
+    class PC,RQ,X,V code
     class W human
 ```
 
-<sub>🟧 nodes call the LLM · 🟦 nodes are deterministic code · 🟩 waits for a human. Only 3 of the 11 nodes use the model; everything that changes the system or decides success is code.</sub>
+<sub>🟧 nodes call the LLM · 🟦 nodes are deterministic code · 🟩 waits for a human. Only 3 of the 10 nodes use the model; everything that changes the system or decides success is code.</sub>
 
 ### Where the LLM is trusted, and where it is not
 
@@ -126,8 +126,7 @@ flowchart LR
     C --> T[Top 3 → evidence the RCA can cite]
 ```
 
-The knowledge base holds runbooks, past incidents and postmortems that the agent writes itself, but **only** after an incident that a human
-approved and verification confirmed, so a wrong analysis can never poison it. If the models cannot load, retrieval falls back to BM25 and
+The knowledge base holds runbooks and past incidents. If the models cannot load, retrieval falls back to BM25 and
 `/health` says so.
 
 ### Components
@@ -217,12 +216,11 @@ python main.py run bad_deploy_checkout --demo --auto-approve
 or `OLLAMA_BASE_URL`, then:
 
 ```bash
-python main.py check-llm             # one test prompt: confirms the key and model work
-python main.py serve                 # uses that model; an incident whose first call fails falls back to the scripted model
+python main.py serve                 # uses that model
 python evaluate.py --runs 5
 ```
 
-**4. Tests** (148 tests, about 4 seconds, no network):
+**4. Tests** (137 tests, about 4 seconds, no network):
 
 ```bash
 python -m pytest -q
@@ -338,7 +336,6 @@ adding capability.
 |---|---|---|
 | `GET` | `/scenarios` | available scenarios and what each one tests |
 | `POST` | `/scenarios/{name}/trigger` | start an incident from a scenario; optional body `{"provider", "api_key", "model"}` runs it on your own model |
-| `POST` | `/incidents` | start an incident from an alert payload (webhook style) |
 | `GET` | `/incidents` · `/incidents/{id}` | list incidents · full state: evidence, hypotheses, claims, plan, timeline |
 | `POST` | `/incidents/{id}/approval` | `{"approved": true, "reviewer": "alice"}` resumes the paused run |
 | `POST` | `/incidents/{id}/retry` | resume a failed run from its last checkpoint |
@@ -361,7 +358,7 @@ Interactive docs are served at `/docs`.
 │   ├── schemas.py          Pydantic contracts: Evidence, Hypothesis, Decision, Claim, RCA, Plan
 │   ├── policy.py           deterministic safety rules
 │   ├── tools.py            scenario replay tools + per-incident replay state
-│   ├── rag.py              BM25 + Qdrant + RRF + cross-encoder, learned postmortems
+│   ├── rag.py              BM25 + Qdrant + RRF + cross-encoder
 │   ├── service.py          start / stream / pause / resume / retry, state sync
 │   ├── api.py · store.py   FastAPI routes · SQLite incident table
 │   ├── llm.py              Anthropic · OpenAI · Gemini · Ollama behind one interface
@@ -387,12 +384,11 @@ All settings are environment variables; see [`.env.example`](.env.example).
 | `MAX_REPLICAS` | `10` | upper bound for scaling |
 | `USE_DENSE_RETRIEVAL` / `USE_RERANKER` | `true` | hybrid retrieval, or BM25 only |
 | `QDRANT_URL` | empty (in-memory) | remote Qdrant |
-| `LEARN_FROM_INCIDENTS` | `true` | index verified postmortems |
 | `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` | empty | optional tracing |
 
 ## Testing
 
-148 tests run in about four seconds with no network and no API key. Fake models drive the full graph:
+137 tests run in about four seconds with no network and no API key. Fake models drive the full graph:
 
 - a scripted model replies in a fixed order, to test retries and fallbacks;
 - a spy records every prompt, to prove injected text never reaches the model;

@@ -64,7 +64,6 @@ def build_eval_service(llm, retriever):
     """A service on a fresh temporary database, so runs never see each other."""
     run_settings = Settings()
     run_settings.set_data_dir(tempfile.mkdtemp(prefix="ip_eval_"))
-    run_settings.learn_from_incidents = False       # earlier runs must not leak into later runs
     return build_service(run_settings, llm, retriever=retriever)
 
 
@@ -199,7 +198,7 @@ def main():
     if args.scenario != "":
         scenario_names = [args.scenario]
 
-    # Build the retriever once (loading the models takes a few seconds). Learned postmortems are not included.
+    # Build the retriever once (loading the models takes a few seconds).
     retriever = build_retriever(settings, load_documents(settings.knowledge_dir))
     if args.demo:
         model_name = "ScriptedLLM"

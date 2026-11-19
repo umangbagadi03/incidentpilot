@@ -207,41 +207,6 @@ def make_llm(provider, api_key, model=""):
     return GeminiLLM(model, api_key)
 
 
-class FallbackLLM:
-    """The server's real model, with the scripted model as a safety net.
-
-    If the real model fails on the FIRST call of an incident (free quota used up, network down), the
-    whole incident switches to the scripted model, so a visitor never sees a broken page. A failure in
-    the middle of an incident is raised as usual: the incident gets status "error" and can be retried.
-    The switch is per incident, so the service makes one FallbackLLM per incident with fresh().
-    """
-
-    def __init__(self, primary, fallback):
-        self.primary = primary
-        self.fallback = fallback
-        self.calls = 0
-        self.using_fallback = False
-        self.api_key = getattr(primary, "api_key", "")
-        self.label = describe_llm(primary)
-
-    def fresh(self):
-        return FallbackLLM(self.primary, self.fallback)
-
-    def complete(self, system, user):
-        if self.using_fallback:
-            return self.fallback.complete(system, user)
-        try:
-            text = self.primary.complete(system, user)
-        except Exception:
-            if self.calls > 0:
-                raise
-            self.using_fallback = True
-            self.label = describe_llm(self.fallback) + " (live model unavailable)"
-            return self.fallback.complete(system, user)
-        self.calls = self.calls + 1
-        return text
-
-
 def describe_llm(llm):
     """A short name for the UI, for example "Claude · claude-sonnet-5-5" or "Scripted (offline)"."""
     return getattr(llm, "label", type(llm).__name__)

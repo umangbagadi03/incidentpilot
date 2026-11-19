@@ -40,7 +40,7 @@ def tokenize(text):
 # ---------- loading documents ----------
 
 def load_incident_files(directory):
-    """Read past incidents (.json) from a folder. The same format is used for seeded and learned incidents."""
+    """Read past incidents (.json) from a folder."""
     documents = []
     if not os.path.isdir(directory):
         return documents
@@ -67,8 +67,8 @@ def incident_to_document(incident):
     }
 
 
-def load_documents(knowledge_dir, learned_dir=""):
-    """Runbooks (.md), seeded past incidents (.json), and incidents the agent learned earlier."""
+def load_documents(knowledge_dir):
+    """Runbooks (.md) and past incidents (.json)."""
     documents = []
 
     runbook_dir = os.path.join(knowledge_dir, "runbooks")
@@ -87,18 +87,7 @@ def load_documents(knowledge_dir, learned_dir=""):
             })
 
     documents.extend(load_incident_files(os.path.join(knowledge_dir, "past_incidents")))
-    if learned_dir != "":
-        documents.extend(load_incident_files(learned_dir))
     return documents
-
-
-def save_postmortem(learned_dir, incident):
-    """Write a finished incident to disk. It is indexed again at the next start-up."""
-    os.makedirs(learned_dir, exist_ok=True)
-    path = os.path.join(learned_dir, incident["id"] + ".json")
-    with open(path, "w", encoding="utf-8") as handle:
-        json.dump(incident, handle, indent=2)
-    return path
 
 
 # ---------- reciprocal rank fusion ----------
@@ -165,7 +154,7 @@ class DenseIndex:
     def build(self, documents):
         """Drop and re-create the collection, then store every document.
 
-        The runbook and postmortem files are the source of truth. With a remote Qdrant the collection
+        The runbook and past-incident files are the source of truth. With a remote Qdrant the collection
         outlives the app, so it could hold points from an older run (a deleted document, another
         embedding model with another vector size). Re-creating it removes all of them.
         """
@@ -182,9 +171,6 @@ class DenseIndex:
             vectors_config=VectorParams(size=len(points[0].vector), distance=Distance.COSINE),
         )
         self.client.upsert(collection_name=COLLECTION, points=points)
-
-    def add(self, document):
-        self.client.upsert(collection_name=COLLECTION, points=self.make_points([document]))
 
     def search(self, query, top_n):
         query_vector = self.embed([query])[0]
@@ -286,15 +272,6 @@ class HybridRetriever:
                 "text": document["text"],
             })
         return results
-
-    def add_document(self, document):
-        """Add one document to every index (used when the agent learns from a resolved incident)."""
-        if document["id"] not in self.documents:
-            self.doc_ids.append(document["id"])
-        self.documents[document["id"]] = document
-        self.rebuild_bm25()
-        if self.dense is not None:
-            self.dense.add(document)
 
 
 def build_retriever(settings, documents):

@@ -48,7 +48,6 @@ class Settings:
         self.reranker_model = os.environ.get("RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
         self.qdrant_url = os.environ.get("QDRANT_URL", "")            # empty = in-memory Qdrant
         self.qdrant_api_key = os.environ.get("QDRANT_API_KEY", "")
-        self.learn_from_incidents = get_bool("LEARN_FROM_INCIDENTS", "true")
 
         # --- Folders and files ---
         self.scenarios_dir = os.environ.get("SCENARIOS_DIR", os.path.join(ROOT, "scenarios"))
@@ -69,9 +68,7 @@ class Settings:
         self.data_dir = data_dir
         self.db_path = os.path.join(data_dir, "incidents.db")             # incident list for the API
         self.checkpoint_path = os.path.join(data_dir, "checkpoints.db")   # LangGraph checkpoints
-        self.learned_dir = os.path.join(data_dir, "learned")              # postmortems written by the agent
 
     def make_dirs(self):
         os.makedirs(self.data_dir, exist_ok=True)
-        os.makedirs(self.learned_dir, exist_ok=True)
         os.makedirs(self.reports_dir, exist_ok=True)
